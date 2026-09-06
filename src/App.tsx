@@ -7,6 +7,11 @@ type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient();
 const labels: Record<string, string> = { AMPLibraryAgent: 'Apple Music' };
+const demoApps: AppState = {
+  Discord: { volume: 72, muted: false },
+  Firefox: { volume: 48, muted: false },
+  AMPLibraryAgent: { volume: 86, muted: false },
+};
 
 function isVolumeState(value: unknown): value is VolumeStateMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:state';
@@ -61,43 +66,47 @@ export default function App() {
   const send = (message: object) => client.forward.json(message).catch(() => undefined);
   const title = player?.track?.title ?? 'Nothing playing';
   const artist = player?.track?.artist ?? 'BridgeThing media controls';
+  const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
+  const showingDemoApps = Object.keys(apps).length === 0;
 
   return <main className="app-shell">
     <section className="hero-panel">
       <div className="artwork" style={artworkUrl ? { backgroundImage: `url(${artworkUrl})` } : undefined}>
         {!artworkUrl && <span>NO ARTWORK</span>}
       </div>
-      <p className="status">{connected ? 'Extension connected' : 'Connecting to extension'}<span className={connected ? 'status-dot live' : 'status-dot'} /></p>
+      
       <div className="now-playing">
-        <strong className="track-title">{title}</strong>
-        <span className="track-artist">{artist}</span>
         <div className="transport">
           <button onClick={() => send({ type: 'playback:previous' })} title="Previous track">|&lt;</button>
           <button className="transport-main" onClick={() => send({ type: 'playback:playPause' })} title={playing ? 'Pause' : 'Play'}>{playing ? '||' : '>'}</button>
           <button onClick={() => send({ type: 'playback:next' })} title="Next track">&gt;|</button>
         </div>
+        <div className="music">
+          <strong className="track-title">{title}</strong>
+          <span className="track-artist">{artist}</span>
+        </div>
       </div>
     </section>
     <section className="mixer-panel">
-      <header><span>APPLICATION MIXER</span><small>WINDOWS AUDIO SESSIONS</small></header>
+      <header><span>APPLICATION MIXER</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
       <div className="mixer-list">
-        {Object.entries(apps).map(([appName, state]) => {
+        {Object.entries(displayedApps).map(([appName, state]) => {
           const unavailable = state.volume < 0;
           return <article className="mixer-row" key={appName}>
             <div className="row-top"><strong>{labels[appName] ?? appName}</strong><span>{unavailable ? '--' : `${state.volume}%`}</span></div>
             <div className="row-bottom">
-              <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !unavailable && send({ type: 'volume:toggleMute', appName })} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
-              <input type="range" min="0" max="100" value={unavailable ? 0 : state.volume} disabled={unavailable} onChange={event => {
+              <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !showingDemoApps && !unavailable && send({ type: 'volume:toggleMute', appName })} disabled={showingDemoApps || unavailable} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
+              <input type="range" min="0" max="100" value={unavailable ? 0 : state.volume} disabled={showingDemoApps || unavailable} onChange={event => {
                 const volume = Number(event.target.value);
                 setApps(previous => ({ ...previous, [appName]: { ...previous[appName], volume } }));
                 send({ type: 'volume:set', appName, volume });
               }} />
-              <span className="availability">{unavailable ? 'NOT OPEN' : 'ACTIVE'}</span>
+              <span className="availability">{showingDemoApps ? 'DEMO' : unavailable ? 'NOT OPEN' : 'ACTIVE'}</span>
             </div>
           </article>;
         })}
         {mixerError && <div className="empty">{mixerError}</div>}
-        {Object.keys(apps).length === 0 && !mixerError && <div className="empty">Waiting for the desktop extension.</div>}
+        {showingDemoApps && !mixerError && <div className="empty">Demo application data</div>}
       </div>
     </section>
   </main>;

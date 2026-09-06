@@ -43,8 +43,8 @@ button {
 .hero-panel {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: clamp(28px, 5vw, 72px);
+    justify-content: flex-start;
+    padding: clamp(28px, 2vw, 45px);
     background: #ff5269;
     color: #161817;
     min-height: 100%;
@@ -55,14 +55,14 @@ button {
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    margin-bottom: 28px;
+    margin-bottom: 18px;
     background: #ff5269;
     background-position: center;
     background-size: cover;
     box-shadow: 12px 12px 0 #962f3d;
     color: #962f3d;
     font-family: 'DM Mono', monospace;
-    font-size: 11px;
+    font-size: 13px;
     letter-spacing: .08em;
 }
 
@@ -75,8 +75,9 @@ button {
 small {
     font-family: 'DM Mono', monospace;
     letter-spacing: .08em;
-    font-size: 11px;
+    font-size: 13px;
 }
+
 
 h1 {
     margin: 8vh 0 0;
@@ -110,8 +111,7 @@ h1 em {
 }
 
 .now-playing {
-    border-top: 1px solid #962f3d;
-    padding-top: 18px;
+    padding-top: 5px;
 }
 
 .now-playing strong,
@@ -119,32 +119,43 @@ h1 em {
     display: block;
 }
 
+.music {
+    display: flex;
+    flex-direction: column;
+}
+
 .track-title {
+    display: flex;
     max-width: 18ch;
     margin-top: 8px;
     font-size: clamp(26px, 3vw, 42px);
     line-height: 1;
     letter-spacing: -.025em;
     font-weight: 600;
+    justify-content: center;
 }
 
 .track-artist {
+    display: flex;
+    max-width: 30ch;
     margin-top: 8px;
     color: #962f3d;
     font-family: 'DM Mono', monospace;
-    font-size: 12px;
+    font-size: 14px;
     letter-spacing: .04em;
     text-transform: uppercase;
+    justify-content: center;
 }
 
 .transport {
     display: flex;
     gap: 10px;
-    margin-top: 22px;
+    margin-top: 5px;
+    justify-content: center;
 }
 
 .transport button {
-    width: 44px;
+    width: 75px;
     height: 38px;
     border: 1px solid #962f3d;
     background: transparent;
@@ -159,7 +170,8 @@ h1 em {
 
 .mixer-panel {
     min-width: 0;
-    padding: clamp(28px, 5vw, 72px);
+    padding: clamp(15px, 5vw, 20px);
+    
     overflow: auto;
     background: #202322;
 }
@@ -171,10 +183,30 @@ h1 em {
     color: #ff5269;
     border-bottom: 1px solid #454946;
     padding-bottom: 16px;
+    
+}
+
+.mixer-meta {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    text-align: right;
+    
+}
+
+.extension-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #ff5269;
 }
 
 .mixer-panel small {
     color: #8e9790;
+}
+
+.mixer-panel small.extension-status {
+    color: #ff5269;
 }
 
 .mixer-list {
@@ -184,6 +216,7 @@ h1 em {
 .mixer-row {
     padding: 24px 0;
     border-bottom: 1px solid #454946;
+    padding-right: 45px;
 }
 
 .row-top,
@@ -239,7 +272,7 @@ input[type='range'] {
     padding: 40px 0;
     color: #8e9790;
     font-family: 'DM Mono', monospace;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 @media (max-width: 700px) {
@@ -265,13 +298,20 @@ input[type='range'] {
     }
 
     .mixer-panel {
-        padding: 24px;
+        padding: 10px;
     }
 
     .mixer-panel header {
         align-items: flex-start;
         flex-direction: column;
         gap: 8px;
+    }
+
+    .mixer-meta {
+        width: 100%;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
     }
 
     .row-top strong {
