@@ -1,29 +1,28 @@
 {
-  "name": "volume-mixer-bridgething",
+  "name": "volumeMixerBridgeThing",
   "private": true,
-  "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build && node scripts/build-extension.mjs",
-    "package": "npm run build && node scripts/package.mjs",
-    "typecheck": "tsc -b"
-  },
-  "dependencies": {
-    "@bridgething/client": "^0.12.1",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1"
+    "new": "bunx create-bridgething",
+    "dev": "bridgething-source run dev",
+    "dev:device": "bridgething-source run dev:device",
+    "build": "bridgething-source run build",
+    "push": "bridgething-source run push",
+    "share": "bridgething-source run share",
+    "check": "bridgething-source check",
+    "bump": "bridgething-source bump",
+    "shot": "bridgething-source shot",
+    "catalog": "bridgething-source catalog",
+    "publish": "bridgething-source publish",
+    "skills": "bridgething-source skills",
+    "format": "prettier --write \"*.json\" \"*.js\""
   },
   "devDependencies": {
-    "@bridgething/extension": "^0.12.1",
-    "@types/node": "^22.19.5",
-    "@types/react": "^18.3.27",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.3.1",
-    "esbuild": "^0.25.12",
-    "native-sound-mixer": "^3.4.6-win",
-    "typescript": "^5.5.3",
-    "vite": "^5.4.21",
-    "yazl": "^3.3.1"
+    "@bridgething/source": "^0.12.1",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3"
   }
 }

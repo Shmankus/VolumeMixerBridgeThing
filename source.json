@@ -1,0 +1,8 @@
+{
+  "name": "Volume Mixer",
+  "description": "Windows app volume mixer with BridgeThing media controls.",
+  "homepage": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+  "icon": null,
+  "base_url": "https://shmankus.github.io/VolumeMixerBridgeThing",
+  "recommended_sources": []
+}
