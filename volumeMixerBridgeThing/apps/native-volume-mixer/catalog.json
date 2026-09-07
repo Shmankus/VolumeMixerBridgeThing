@@ -1,0 +1,8 @@
+{
+  "author": "Shmankus",
+  "homepage": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+  "source": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+  "icon": null,
+  "screenshots": [],
+  "min_libbridgething_version": "0.12.1"
+}

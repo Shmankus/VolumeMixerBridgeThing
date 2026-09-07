@@ -1,0 +1,16 @@
+{
+  "id": "01a07c59-bf95-7267-93ee-ba147aaff75d",
+  "name": "native-volume-mixer",
+  "version": "0.1.0",
+  "description": "Windows app volume mixer with BridgeThing media controls.",
+  "permissions": ["forward"],
+  "art": {
+    "heroPx": 248,
+    "thumbPx": 96
+  },
+  "extension": {
+    "entry": "extension/desktop.mjs",
+    "permissions": ["run", "read:extension"],
+    "api": 1
+  }
+}
