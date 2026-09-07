@@ -1,0 +1,46 @@
+{
+  "$schema": "https://apps.bridgething.com/schemas/catalog/v1.json",
+  "schema": "catalog.v1",
+  "updated_at": "2026-09-07T15:25:22.219Z",
+  "repo": {
+    "name": "Volume Mixer",
+    "description": "Windows app volume mixer with BridgeThing media controls.",
+    "homepage": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+    "icon": null
+  },
+  "apps": [
+    {
+      "id": "01a07c59-bf95-7267-93ee-ba147aaff75d",
+      "name": "native-volume-mixer",
+      "description": "Windows app volume mixer with BridgeThing media controls.",
+      "author": "Shmankus",
+      "icon": null,
+      "homepage": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+      "source": "https://github.com/Shmankus/VolumeMixerBridgeThing",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "released_at": "2026-09-07T15:25:22.215Z",
+          "download": {
+            "url": "https://shmankus.github.io/VolumeMixerBridgeThing/r/01a07c59-bf95-7267-93ee-ba147aaff75d/0.1.0.zip",
+            "size": 426524,
+            "sha256": "ad7d7ead6388678cabf2564d1b51173886294bd380f5a1d3c899817844f24966"
+          },
+          "permissions": [
+            "forward"
+          ],
+          "extension": {
+            "desktop": true,
+            "permissions": [
+              "run",
+              "read:extension"
+            ]
+          },
+          "min_libbridgething_version": "0.12.1",
+          "changelog": "First release."
+        }
+      ]
+    }
+  ],
+  "recommended_sources": []
+}
