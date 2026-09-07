@@ -26,37 +26,53 @@ body {
 button,
 input {
     font: inherit;
+    
 }
 
 button {
     cursor: pointer;
 }
 
+
 .app-shell {
-    display: grid;
-    grid-template-columns: minmax(300px, 38%) 1fr;
+    display: flex;
     width: 100%;
     height: 100%;
     background: #161817;
+
 }
+
+/* ==========================================================================
+   SONG CONTROL SECTION
+   ========================================================================== */
 
 .hero-panel {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    flex-basis: 35%;
+    flex-grow: 1;
     padding: clamp(28px, 2vw, 45px);
     background: #ff5269;
     color: #161817;
     min-height: 100%;
+    width: 100%;
+  
+
+}
+
+.hero-panel.expanded {
+    flex-direction: row;
+   
 }
 
 .artwork {
-    width: min(100%, 360px);
+    width: auto;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     margin-bottom: 18px;
-    background: #ff5269;
+    background: #69252e;
     background-position: center;
     background-size: cover;
     box-shadow: 12px 12px 0 #962f3d;
@@ -64,6 +80,93 @@ button {
     font-family: 'DM Mono', monospace;
     font-size: 13px;
     letter-spacing: .08em;
+}
+
+.artwork.expanded {
+    order: 2;
+    height: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 0px;
+    transition: 'all 0.5s ease-in-out', 
+
+}
+
+
+.transport {
+    display: flex;
+    gap: 10px;
+    margin-top: 5px;
+    justify-content: center;
+
+}
+
+
+.transport.expanded {
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding-right: 28px;
+
+}
+
+.music {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: start;
+}
+
+.music.expanded {
+    height: 100%;
+}
+
+.now-playing {
+    padding: 0;
+}
+
+.now-playing.expanded {
+    order: 1;
+    display: grid;
+    flex-direction: column;
+    display: flex;
+    flex-grow: 1;
+    height: 100%;
+
+}
+
+
+.track-title {
+    display: flex;
+    max-width: 18ch;
+    margin-top: 8px;
+    font-size: clamp(26px, 3vw, 42px);
+    line-height: 1;
+    letter-spacing: -.025em;
+    font-weight: 600;
+    justify-content: start;
+}
+
+.track-title.expanded {
+    font-size: clamp(33px, 5vw, 55px);
+}
+
+.track-artist {
+    display: flex;
+    max-width: 30ch;
+    margin-top: 8px;
+    color: #68212a;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    justify-content: start;
+}
+
+.track-artist.expanded {
+    display: flex;
+    max-width: 35ch;
+    margin-top: 8px;
+    font-size: clamp(18px, 3vw, 22px);
 }
 
 .eyebrow,
@@ -110,54 +213,22 @@ h1 em {
     background: #962f3d;
 }
 
-.now-playing {
-    padding-top: 5px;
-}
+
 
 .now-playing strong,
 .now-playing span {
     display: block;
 }
 
-.music {
-    display: flex;
-    flex-direction: column;
-}
 
-.track-title {
-    display: flex;
-    max-width: 18ch;
-    margin-top: 8px;
-    font-size: clamp(26px, 3vw, 42px);
-    line-height: 1;
-    letter-spacing: -.025em;
-    font-weight: 600;
-    justify-content: center;
-}
 
-.track-artist {
-    display: flex;
-    max-width: 30ch;
-    margin-top: 8px;
-    color: #962f3d;
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    justify-content: center;
-}
 
-.transport {
-    display: flex;
-    gap: 10px;
-    margin-top: 5px;
-    justify-content: center;
-}
 
 .transport button {
-    width: 75px;
+    width: auto;
+    flex-grow: 1;
     height: 38px;
-    border: 1px solid #962f3d;
+    border: 1px solid #000000;
     background: transparent;
     color: #161817;
     font-weight: 600;
@@ -168,11 +239,17 @@ h1 em {
     color: #ff5269;
 }
 
+
+
+/* ==========================================================================
+   MIXER SECTION
+   ========================================================================== */
+
 .mixer-panel {
     min-width: 0;
     padding: clamp(15px, 5vw, 20px);
-    
-    overflow: auto;
+    width: 100%;
+    flex-basis: 65%;
     background: #202322;
 }
 
@@ -183,7 +260,7 @@ h1 em {
     color: #ff5269;
     border-bottom: 1px solid #454946;
     padding-bottom: 16px;
-    
+
 }
 
 .mixer-meta {
@@ -191,7 +268,7 @@ h1 em {
     align-items: center;
     gap: 22px;
     text-align: right;
-    
+
 }
 
 .extension-status {
@@ -288,7 +365,7 @@ input[type='range'] {
     }
 
     .artwork {
-        width: min(58vw, 230px);
+
         margin-bottom: 18px;
     }
 

@@ -1,7 +1,7 @@
 // Main webapp UI: displays media controls, artwork, and Windows app volumes.
 import { useEffect, useState } from 'react';
 import { BridgethingClient, type PlayerState } from '@bridgething/client';
-
+import { motion } from 'framer-motion';
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
@@ -9,9 +9,9 @@ type MixerErrorMessage = { type: 'volume:error'; message: string };
 const client = new BridgethingClient();
 const labels: Record<string, string> = { AMPLibraryAgent: 'Apple Music' };
 const demoApps: AppState = {
-  Discord: { volume: 72, muted: false },
-  Firefox: { volume: 48, muted: false },
-  AMPLibraryAgent: { volume: 86, muted: false },
+  App1: { volume: 72, muted: false },
+  App2: { volume: 48, muted: false },
+  App3: { volume: 86, muted: false },
 };
 
 function isVolumeState(value: unknown): value is VolumeStateMessage {
@@ -22,12 +22,20 @@ function isMixerError(value: unknown): value is MixerErrorMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:error';
 }
 
+
+
 export default function App() {
   const [apps, setApps] = useState<AppState>({});
   const [player, setPlayer] = useState<PlayerState | null>(null);
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
   const [mixerError, setMixerError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+  const [fullAlbum, setfullAlbum] = useState(false);
+
+  const handleAlbumCoverTap = () => {
+    setfullAlbum((fullAlbum) => !fullAlbum);
+  };
+
 
   useEffect(() => {
     const offPlayer = client.player.onSnapshot(reply => setPlayer(reply.state));
@@ -70,25 +78,64 @@ export default function App() {
   const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
   const showingDemoApps = Object.keys(apps).length === 0;
 
-  return <main className="app-shell">
-    <section className="hero-panel">
-      <div className="artwork" style={artworkUrl ? { backgroundImage: `url(${artworkUrl})` } : undefined}>
-        {!artworkUrl && <span>NO ARTWORK</span>}
-      </div>
-      
-      <div className="now-playing">
-        <div className="transport">
-          <button onClick={() => send({ type: 'playback:previous' })} title="Previous track">|&lt;</button>
-          <button className="transport-main" onClick={() => send({ type: 'playback:playPause' })} title={playing ? 'Pause' : 'Play'}>{playing ? '||' : '>'}</button>
-          <button onClick={() => send({ type: 'playback:next' })} title="Next track">&gt;|</button>
-        </div>
-        <div className="music">
-          <strong className="track-title">{title}</strong>
-          <span className="track-artist">{artist}</span>
-        </div>
-      </div>
-    </section>
-    <section className="mixer-panel">
+
+  function renderAlbum() {
+    return (
+      <motion.section
+        layout
+        transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+        className={`hero-panel ${fullAlbum ? "expanded" : ""}`}
+      >
+        <motion.div
+          layout
+          className={`artwork ${fullAlbum ? "expanded" : ""}`}
+          onClick={handleAlbumCoverTap}
+          style={artworkUrl ? { backgroundImage: `url(${artworkUrl})` } : undefined}
+        >
+          {!artworkUrl && <span>NO ARTWORK</span>}
+        </motion.div>
+
+        <motion.div layout className={`now-playing ${fullAlbum ? 'expanded' : ''}`}>
+          <motion.div layout className={`transport ${fullAlbum ? 'expanded' : ''}`}>
+            <motion.button
+              layout
+              onClick={() => send({ type: 'playback:previous' })}
+              title="Previous track"
+            >
+              <motion.span layout>|&lt;</motion.span>
+            </motion.button>
+            <motion.button
+              layout
+              className="transport-main"
+              onClick={() => send({ type: 'playback:playPause' })}
+              title={playing ? 'Pause' : 'Play'}
+            >
+              <motion.span layout>{playing ? '||' : '>'}</motion.span>
+            </motion.button>
+
+            <motion.button
+              layout
+              onClick={() => send({ type: 'playback:next' })}
+              title="Next track"
+            >
+              <motion.span layout>&gt;|</motion.span>
+            </motion.button>
+          </motion.div>
+
+          <motion.div layout className={`music ${fullAlbum ? 'expanded' : ''}`}>
+            <motion.strong layout className={`track-title ${fullAlbum ? 'expanded' : ''}`}>{title}</motion.strong>
+            <motion.span layout className={`track-artist ${fullAlbum ? 'expanded' : ''}`}>{artist}</motion.span>
+          </motion.div>
+          
+        </motion.div>
+
+      </motion.section>
+    )
+  }
+
+
+  function renderMixer() {
+    return (<section className="mixer-panel">
       <header><span>APPLICATION MIXER</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
       <div className="mixer-list">
         {Object.entries(displayedApps).map(([appName, state]) => {
@@ -109,6 +156,14 @@ export default function App() {
         {mixerError && <div className="empty">{mixerError}</div>}
         {showingDemoApps && !mixerError && <div className="empty">Demo application data</div>}
       </div>
-    </section>
+    </section>)
+
+  }
+
+
+  return <main className="app-shell">
+    {renderAlbum && renderAlbum()}
+    {!fullAlbum && renderMixer()}
+
   </main>;
 }
