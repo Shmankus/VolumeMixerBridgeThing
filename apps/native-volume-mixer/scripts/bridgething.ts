@@ -13,7 +13,7 @@ var DAEMON_PROXY_PATH = '/__bridgething';
 
 // ../webapp-shared/src/extension.ts
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createRequire as createRequire2 } from 'node:module';
 import { homedir, platform } from 'node:os';
 import { delimiter, dirname, join as join2, resolve } from 'node:path';
@@ -533,6 +533,10 @@ ${lines.join(`
     if (this.restartTimer) {
       clearTimeout(this.restartTimer);
       this.restartTimer = null;
+    }
+    const extensionDir = dirname(this.outfile);
+    for (const asset of ['mixer-helper.cjs', 'mixer-worker.cjs', 'win-sound-mixer.node']) {
+      copyFileSync(resolve(this.opts.root, 'extension', asset), join2(extensionDir, asset));
     }
     this.crashes = 0;
     if (this.child) {

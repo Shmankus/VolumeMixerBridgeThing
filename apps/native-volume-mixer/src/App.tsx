@@ -22,6 +22,15 @@ function isMixerError(value: unknown): value is MixerErrorMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:error';
 }
 
+function requestId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, character => {
+    const random = Math.random() * 16 | 0;
+    const value = character === 'x' ? random : random & 0x3 | 0x8;
+    return value.toString(16);
+  });
+}
+
 
 
 export default function App() {
@@ -62,7 +71,7 @@ export default function App() {
     setArtworkUrl(null);
     if (!artworkId) return;
     let cancelled = false;
-    client.asset.get({ id: artworkId, requestId: crypto.randomUUID() }).then(result => {
+    client.asset.get({ id: artworkId, requestId: requestId() }).then(result => {
       if (cancelled || !result.ok) return;
       const bytes = new Uint8Array(result.response.bytes).slice();
       const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
