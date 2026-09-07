@@ -26,7 +26,7 @@ function fileUrlToWindowsPath(url: URL): string {
 
 /** Starts the hidden Node bridge that can load the Windows-only native addon. */
 function createMixerClient(deno: any): MixerClient {
-  const helperPath = fileUrlToWindowsPath(new URL('./mixer-helper.cjs', import.meta.url));
+  const helperPath = fileUrlToWindowsPath(new URL('./runtime/win32-x64/mixer-helper.cjs', import.meta.url));
   const process = new deno.Command('C:\\Program Files\\nodejs\\node.exe', {
     args: [helperPath],
     stdin: 'piped',
@@ -99,7 +99,7 @@ if (deno) {
   try {
     const { createRequire } = await import('node:module');
     const require = createRequire(import.meta.url);
-    const addon = require('./win-sound-mixer.node');
+    const addon = require('./runtime/win32-x64/win-sound-mixer.node');
     mixer = addon.SoundMixer ?? addon.default ?? addon;
   } catch (error) {
     nativeLoadError = error;

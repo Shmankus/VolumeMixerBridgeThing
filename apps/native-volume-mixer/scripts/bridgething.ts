@@ -13,11 +13,12 @@ var DAEMON_PROXY_PATH = '/__bridgething';
 
 // ../webapp-shared/src/extension.ts
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRequire as createRequire2 } from 'node:module';
 import { homedir, platform } from 'node:os';
 import { delimiter, dirname, join as join2, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
+import { EXTENSION_RUNTIME_ASSETS, EXTENSION_RUNTIME_DIR } from './extension-runtime';
 
 // ../webapp-shared/src/gateway.ts
 import { decode as msgpackDecode, encode as msgpackEncode } from '@msgpack/msgpack';
@@ -533,6 +534,16 @@ ${lines.join(`
     if (this.restartTimer) {
       clearTimeout(this.restartTimer);
       this.restartTimer = null;
+    }
+    const runtimeDir = join2(dirname(this.outfile), EXTENSION_RUNTIME_DIR);
+    mkdirSync(runtimeDir, { recursive: true });
+    for (const asset of EXTENSION_RUNTIME_ASSETS) {
+      try {
+        unlinkSync(join2(dirname(this.outfile), asset));
+      } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+      }
+      copyFileSync(resolve(this.opts.root, 'extension', EXTENSION_RUNTIME_DIR, asset), join2(runtimeDir, asset));
     }
     this.crashes = 0;
     if (this.child) {
