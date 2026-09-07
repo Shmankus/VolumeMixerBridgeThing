@@ -26,6 +26,7 @@ body {
 button,
 input {
     font: inherit;
+    
 }
 
 button {
@@ -56,26 +57,22 @@ button {
     color: #161817;
     min-height: 100%;
     width: 100%;
-
+  
 
 }
+
 .hero-panel.expanded {
-    display: flex;
-    
-    place-items: center;
-    
-    background: #ff5269;
-    color: #161817;
-
-
+    flex-direction: row;
+   
 }
+
 .artwork {
-    width:auto;
+    width: auto;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     margin-bottom: 18px;
-    background: #ff5269;
+    background: #69252e;
     background-position: center;
     background-size: cover;
     box-shadow: 12px 12px 0 #962f3d;
@@ -86,20 +83,12 @@ button {
 }
 
 .artwork.expanded {
-
-    height:100%;
+    order: 2;
+    height: 100%;
     aspect-ratio: 1;
-    display: grid;
-    place-items: center;
-    margin-bottom: 18px;
-    background: #ff5269;
-    background-position: center;
-    background-size: cover;
-    box-shadow: 12px 12px 0 #962f3d;
-    color: #962f3d;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    letter-spacing: .08em;
+    margin-bottom: 0px;
+    transition: 'all 0.5s ease-in-out', 
+
 }
 
 
@@ -108,24 +97,76 @@ button {
     gap: 10px;
     margin-top: 5px;
     justify-content: center;
+
 }
 
 
 .transport.expanded {
-    display: flex;
-    gap: 10px;
-    margin-top: 5px;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding-right: 28px;
+
 }
 
 .music {
     display: flex;
+    flex-grow: 1;
     flex-direction: column;
-    justify-content:start;
+    justify-content: start;
 }
+
 .music.expanded {
-    display: flex;
+    height: 100%;
+}
+
+.now-playing {
+    padding: 0;
+}
+
+.now-playing.expanded {
+    order: 1;
+    display: grid;
     flex-direction: column;
+    display: flex;
+    flex-grow: 1;
+    height: 100%;
+
+}
+
+
+.track-title {
+    display: flex;
+    max-width: 18ch;
+    margin-top: 8px;
+    font-size: clamp(26px, 3vw, 42px);
+    line-height: 1;
+    letter-spacing: -.025em;
+    font-weight: 600;
+    justify-content: start;
+}
+
+.track-title.expanded {
+    font-size: clamp(33px, 5vw, 55px);
+}
+
+.track-artist {
+    display: flex;
+    max-width: 30ch;
+    margin-top: 8px;
+    color: #68212a;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    justify-content: start;
+}
+
+.track-artist.expanded {
+    display: flex;
+    max-width: 35ch;
+    margin-top: 8px;
+    font-size: clamp(18px, 3vw, 22px);
 }
 
 .eyebrow,
@@ -172,9 +213,7 @@ h1 em {
     background: #962f3d;
 }
 
-.now-playing {
-    padding-top: 5px;
-}
+
 
 .now-playing strong,
 .now-playing span {
@@ -183,35 +222,13 @@ h1 em {
 
 
 
-.track-title {
-    display: flex;
-    max-width: 18ch;
-    margin-top: 8px;
-    font-size: clamp(26px, 3vw, 42px);
-    line-height: 1;
-    letter-spacing: -.025em;
-    font-weight: 600;
-    justify-content: start;
-}
-
-.track-artist {
-    display: flex;
-    max-width: 30ch;
-    margin-top: 8px;
-    color: #962f3d;
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    justify-content: start;
-}
-
 
 
 .transport button {
-    width: 75px;
+    width: auto;
+    flex-grow: 1;
     height: 38px;
-    border: 1px solid #962f3d;
+    border: 1px solid #000000;
     background: transparent;
     color: #161817;
     font-weight: 600;
@@ -348,7 +365,7 @@ input[type='range'] {
     }
 
     .artwork {
-        width: min(58vw, 230px);
+
         margin-bottom: 18px;
     }
 
