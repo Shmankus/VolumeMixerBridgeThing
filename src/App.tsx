@@ -1,3 +1,4 @@
+// Main webapp UI: displays media controls, artwork, and Windows app volumes.
 import { useEffect, useState } from 'react';
 import { BridgethingClient, type PlayerState } from '@bridgething/client';
 

@@ -1,3 +1,4 @@
+// BridgeThing desktop extension: forwards webapp commands to the Windows mixer.
 import { asJson, defineExtension, json } from '@bridgething/extension';
 
 type MixerMessage =
@@ -17,10 +18,13 @@ let mixerClient: MixerClient | undefined;
 let nativeLoadError: unknown;
 
 function fileUrlToWindowsPath(url: URL): string {
+  // BridgeThing's Deno build does not expose Deno.fromFileUrl, so convert the
+  // helper URL without depending on a Deno-only utility.
   const path = decodeURIComponent(url.pathname);
   return /^\/[A-Za-z]:\//.test(path) ? path.slice(1).replaceAll('/', '\\') : path;
 }
 
+/** Starts the hidden Node bridge that can load the Windows-only native addon. */
 function createMixerClient(deno: any): MixerClient {
   const helperPath = fileUrlToWindowsPath(new URL('./mixer-helper.cjs', import.meta.url));
   const process = new deno.Command('C:\\Program Files\\nodejs\\node.exe', {
@@ -36,6 +40,7 @@ function createMixerClient(deno: any): MixerClient {
   const pending = new Map<number, { resolve: (apps: AppState) => void; reject: (error: unknown) => void }>();
   let nextId = 1;
 
+  // Keep stderr separate from stdout: stdout is a line-delimited JSON protocol.
   void (async () => {
     let error = '';
     while (true) {
@@ -46,6 +51,8 @@ function createMixerClient(deno: any): MixerClient {
     if (error.trim()) console.error(`Mixer helper: ${error.trim()}`);
   })();
 
+  // Responses are correlated locally because the helper is a fire-and-forget
+  // process stream rather than a request/response API.
   void (async () => {
     let buffered = '';
     while (true) {
@@ -109,14 +116,17 @@ function cleanName(value: string): string {
   return value.split(/[\\/]/).at(-1)?.replace(/\.exe$/i, '').toLowerCase() ?? '';
 }
 
+/** Returns the session's executable name in the shape used by watchedApps. */
 function sessionName(session: any): string {
   return session.appName ?? session.name ?? '';
 }
 
+/** Reads the native mixer's current device graph and flattens its sessions. */
 function sessions(): any[] {
   return (mixer.devices ?? []).flatMap(device => device.sessions ?? []);
 }
 
+/** Builds the UI state, using -1 to distinguish an absent app from volume 0. */
 function snapshot(): AppState {
   return Object.fromEntries(watchedApps.map(app => {
     const session = sessions().find(item => app.names.includes(cleanName(sessionName(item))));
@@ -127,6 +137,7 @@ function snapshot(): AppState {
   }));
 }
 
+/** Finds all matching sessions so duplicate audio endpoints are controlled together. */
 function findSessions(appName: string): any[] {
   const app = watchedApps.find(item => item.id === appName);
   return sessions().filter(item => app?.names.includes(cleanName(sessionName(item))));
@@ -175,7 +186,10 @@ defineExtension({
       sendState();
     });
     refreshState();
-    setInterval(sendState, 2_000);
+    setInterval(() => {
+      if (mixerClient) refreshState();
+      else sendState();
+    }, 2_000);
     ctx.log.info('Volume mixer extension ready');
   },
 });

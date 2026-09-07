@@ -1,3 +1,4 @@
+// Extension build step: bundle the Deno entry point and copy native runtime assets.
 import { build } from 'esbuild';
 import { cp, mkdir } from 'node:fs/promises';
 
@@ -13,3 +14,4 @@ await build({
 });
 await cp('public/win-sound-mixer.node', 'dist/extension/win-sound-mixer.node');
 await cp('extension/mixer-helper.cjs', 'dist/extension/mixer-helper.cjs');
+await cp('extension/mixer-worker.cjs', 'dist/extension/mixer-worker.cjs');
