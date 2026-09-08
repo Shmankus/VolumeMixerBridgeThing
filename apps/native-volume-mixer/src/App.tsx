@@ -21,7 +21,7 @@ const demoApps: AppState = {
 function isVolumeState(value: unknown): value is VolumeStateMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:state';
 }
-// makes sure value is regarding mixer states
+// makes sure value is regarding mixer errors
 function isMixerError(value: unknown): value is MixerErrorMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:error';
 }
@@ -70,13 +70,6 @@ export default function App() {
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null); // album cover url that comes from player state
   const [mixerError, setMixerError] = useState<string | null>(null); // decides if mixer will show fake data
   const [connected, setConnected] = useState(false); // check for if webapp is connected to desktop app
-
-
-
-
-
-
-
 
 
   useEffect(() => {
@@ -192,9 +185,7 @@ export default function App() {
     return () => { cancelled = true; };
   }, [player?.track?.artworkId]);
 
-
-
-
+  // Renders left hand album cover and media controls in dual screen mode
   function renderAlbum() {
     return (
       <motion.section
@@ -249,7 +240,7 @@ export default function App() {
     )
   }
 
-  // Renders right hand mixer in dual screen mode
+  // Renders right hand mixer in dual screen mode 
   function renderMixer() {
     return (<section className="mixer-panel">
       <header><span>hi</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
@@ -263,7 +254,7 @@ export default function App() {
               <input type="range" min="0" max="100" value={unavailable ? 0 : state.volume} disabled={showingDemoApps || unavailable} onChange={event => {
                 const volume = Number(event.target.value);
                 setApps(previous => ({ ...previous, [appName]: { ...previous[appName], volume } }));
-                send({ type: 'volume:set', appName, volume });
+                send({ type: 'volume:set', appName, volume }); // send volume change to server
               }} />
               <span className="availability">{showingDemoApps ? 'DEMO' : unavailable ? 'NOT OPEN' : 'ACTIVE'}</span>
             </div>
@@ -276,7 +267,7 @@ export default function App() {
 
   }
 
-
+  // Renders the main app shell with album cover and mixer
   return (
     <main
       className="app-shell"
