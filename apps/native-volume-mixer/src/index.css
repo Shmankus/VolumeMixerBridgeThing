@@ -56,7 +56,7 @@ button {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    flex-basis: 35%;
+    flex-basis: 40%;
     flex-grow: 1;
     padding: clamp(28px, 2vw, 45px);
     background: var(--media_bg_color);
@@ -143,6 +143,7 @@ button {
     flex-grow: 1;
     flex-direction: column;
     justify-content: start;
+    overflow: hidden;
 }
 
 .music.expanded {
