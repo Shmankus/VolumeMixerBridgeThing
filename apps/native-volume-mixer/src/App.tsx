@@ -41,6 +41,74 @@ export default function App() {
   const [connected, setConnected] = useState(false);
   const [fullAlbum, setfullAlbum] = useState(false);
 
+  const [highlight_color, set_highlight_color] = useState('#ff5269');
+
+  const [media_bg_color, set_media_bg_color] = useState('#ff5269');
+  const [media_text_color, set_media_text_color] = useState('#000000');
+
+  const [mixer_bg_color, set_mixer_bg_color] = useState('#202322');
+  const [mixer_text_color, set_mixer_text_color] = useState('#f4f1e8');
+
+  useEffect(() => {
+
+    const offConfig = client.config.onChanged(change => {
+
+
+
+      if (change.key === 'highlight_color') {
+        set_highlight_color(change.value || '#ff5269');
+      }
+      if (change.key === 'media_bg_color') {
+        set_media_bg_color(change.value || '#ff5269');
+      }
+      if (change.key === 'media_text_color') {
+        set_media_text_color(change.value || '#000000');
+      }
+
+      if (change.key === 'mixer_bg_color') {
+        set_mixer_bg_color(change.value || '#202322');
+      }
+      if (change.key === 'mixer_text_color') {
+        set_mixer_text_color(change.value || '#f4f1e8');
+      }
+
+
+    });
+
+    client.config.get({ key: 'highlight_color' }).then(result => {
+      if (result.ok) {
+        set_highlight_color(result.response.value || '#ff5269');
+      }
+    });
+
+    client.config.get({ key: 'media_bg_color' }).then(result => {
+      if (result.ok) {
+        set_media_bg_color(result.response.value || '#ff5269');
+      }
+    });
+    client.config.get({ key: 'media_text_color' }).then(result => {
+      if (result.ok) {
+        set_media_text_color(result.response.value || '#000000');
+      }
+    });
+
+    client.config.get({ key: 'mixer_bg_color' }).then(result => {
+      if (result.ok) {
+        set_mixer_bg_color(result.response.value || '#202322');
+      }
+    });
+    client.config.get({ key: 'mixer_text_color' }).then(result => {
+      if (result.ok) {
+        set_mixer_text_color(result.response.value || '#f4f1e8');
+      }
+    });
+
+
+    return offConfig;
+  }, []);
+
+
+
   const handleAlbumCoverTap = () => {
     setfullAlbum((fullAlbum) => !fullAlbum);
   };
@@ -135,7 +203,7 @@ export default function App() {
             <motion.strong layout className={`track-title ${fullAlbum ? 'expanded' : ''}`}>{title}</motion.strong>
             <motion.span layout className={`track-artist ${fullAlbum ? 'expanded' : ''}`}>{artist}</motion.span>
           </motion.div>
-          
+
         </motion.div>
 
       </motion.section>
@@ -145,7 +213,7 @@ export default function App() {
 
   function renderMixer() {
     return (<section className="mixer-panel">
-      <header><span>APPLICATION MIXER</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
+      <header><span>hi</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
       <div className="mixer-list">
         {Object.entries(displayedApps).map(([appName, state]) => {
           const unavailable = state.volume < 0;
@@ -170,7 +238,19 @@ export default function App() {
   }
 
 
-  return <main className="app-shell">
+  return <main
+    className="app-shell"
+    style={{
+      '--highlight_color': highlight_color,
+      '--media_bg_color': media_bg_color,
+      '--media_text_color': media_text_color,
+      '--mixer_bg_color': mixer_bg_color,
+      '--mixer_text_color': mixer_text_color
+
+
+
+    } as React.CSSProperties}
+  >
     {renderAlbum && renderAlbum()}
     {!fullAlbum && renderMixer()}
 

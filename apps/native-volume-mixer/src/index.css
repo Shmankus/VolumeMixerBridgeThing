@@ -5,6 +5,12 @@
     color: #f4f1e8;
     background: #161817;
     font-synthesis: none;
+    --highlight_color: #ff5269;
+    --media_bg_color: #ff5269;
+    --media_text_color: #000000;
+    --mixer_bg_color: #202322;
+    --mixer_text_color: #f4f1e8;
+
 }
 
 * {
@@ -26,7 +32,7 @@ body {
 button,
 input {
     font: inherit;
-    
+
 }
 
 button {
@@ -53,17 +59,17 @@ button {
     flex-basis: 35%;
     flex-grow: 1;
     padding: clamp(28px, 2vw, 45px);
-    background: #ff5269;
+    background: var(--media_bg_color);
     color: #161817;
     min-height: 100%;
     width: 100%;
-  
+
 
 }
 
 .hero-panel.expanded {
     flex-direction: row;
-   
+
 }
 
 .artwork {
@@ -75,7 +81,7 @@ button {
     background: #69252e;
     background-position: center;
     background-size: cover;
-    box-shadow: 12px 12px 0 #962f3d;
+    box-shadow: 12px 12px 0 color-mix(in srgb, var(--media_bg_color), #000 15%);
     color: #962f3d;
     font-family: 'DM Mono', monospace;
     font-size: 13px;
@@ -87,7 +93,7 @@ button {
     height: 100%;
     aspect-ratio: 1;
     margin-bottom: 0px;
-    transition: 'all 0.5s ease-in-out', 
+    transition: 'all 0.5s ease-in-out',
 
 }
 
@@ -144,6 +150,7 @@ button {
     letter-spacing: -.025em;
     font-weight: 600;
     justify-content: start;
+    color: var(--media_text_color);
 }
 
 .track-title.expanded {
@@ -154,7 +161,7 @@ button {
     display: flex;
     max-width: 30ch;
     margin-top: 8px;
-    color: #68212a;
+    color: var(--media_text_color);
     font-family: 'DM Mono', monospace;
     font-size: 14px;
     letter-spacing: .04em;
@@ -210,7 +217,7 @@ h1 em {
 }
 
 .status-dot.live {
-    background: #962f3d;
+    background: var(--highlight_color);
 }
 
 
@@ -228,7 +235,7 @@ h1 em {
     width: auto;
     flex-grow: 1;
     height: 38px;
-    border: 1px solid #000000;
+    border: 1px solid var(--media_text_color);
     background: transparent;
     color: #161817;
     font-weight: 600;
@@ -236,7 +243,7 @@ h1 em {
 
 .transport .transport-main {
     background: #161817;
-    color: #ff5269;
+    color: var(--media_bg_color);
 }
 
 
@@ -250,14 +257,14 @@ h1 em {
     padding: clamp(15px, 5vw, 20px);
     width: 100%;
     flex-basis: 65%;
-    background: #202322;
+    background: var(--mixer_bg_color);
 }
 
 .mixer-panel header {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    color: #ff5269;
+    color: var(--highlight_color);
     border-bottom: 1px solid #454946;
     padding-bottom: 16px;
 
@@ -275,7 +282,7 @@ h1 em {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: #ff5269;
+    color: var(--highlight_color);
 }
 
 .mixer-panel small {
@@ -283,7 +290,7 @@ h1 em {
 }
 
 .mixer-panel small.extension-status {
-    color: #ff5269;
+    color: var(--highlight_color);
 }
 
 .mixer-list {
@@ -310,7 +317,7 @@ h1 em {
 }
 
 .row-top span {
-    color: #ff5269;
+    color: var(--highlight_color);
     font-family: 'DM Mono', monospace;
 }
 
@@ -335,7 +342,7 @@ h1 em {
 
 input[type='range'] {
     flex: 1;
-    accent-color: #ff5269;
+    accent-color: var(--highlight_color);
     min-width: 80px;
 }
 
