@@ -14,10 +14,7 @@ const watchedApps = [
 type MixerMessage =
   | { type: 'volume:refresh' }
   | { type: 'volume:set'; appName: string; volume: number }
-  | { type: 'volume:toggleMute'; appName: string }
-  | { type: 'playback:previous' }
-  | { type: 'playback:playPause' }
-  | { type: 'playback:next' };
+  | { type: 'volume:toggleMute'; appName: string };
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type MixerClient = { request(message: MixerMessage): Promise<AppState> };
