@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
+import { FastAverageColor } from 'fast-average-color';
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
@@ -31,14 +32,28 @@ function requestId(): string {
   });
 }
 
+export async function getAverageColorFromUrl(url: string): Promise<string> {
+  if (!url) return '#ffffff';
 
-
+  try {
+    const fac = new FastAverageColor();
+    const color = await fac.getColorAsync(url, { algorithm: 'sqrt' });
+    return color.hex;
+  } catch (error) {
+    console.error("Error extracting color:", error);
+    return '#ffffff'; // Fallback color on error
+  }
+}
 export default function App() {
   const [apps, setApps] = useState<AppState>({});
   const [player, setPlayer] = useState<PlayerState | null>(null);
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
+  const [useAlbumColor, setUseAlbumColor] = useState(false);
+  const [artworkBg, setArtworkBg] = useState<string>("#080000");
   const [mixerError, setMixerError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
+
+
   const [fullAlbum, setfullAlbum] = useState(false);
 
   const [highlight_color, set_highlight_color] = useState('#ff5269');
@@ -54,7 +69,9 @@ export default function App() {
     const offConfig = client.config.onChanged(change => {
 
 
-
+      if (change.key === 'useArtworkColor') {
+        setUseAlbumColor(change.value == "true" ? true : false );
+      }
       if (change.key === 'highlight_color') {
         set_highlight_color(change.value || '#ff5269');
       }
@@ -143,7 +160,19 @@ export default function App() {
       if (cancelled || !result.ok) return;
       const bytes = new Uint8Array(result.response.bytes).slice();
       const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
+
+      // 2. Fetch the color asynchronously
+      getAverageColorFromUrl(url)
+        .then((hexColor) => {
+          setArtworkBg(hexColor)
+          URL.revokeObjectURL(url);
+        })
+        .catch((err) => {
+          console.error(err);
+          URL.revokeObjectURL(url);
+        });
       setArtworkUrl(url);
+
     });
     return () => { cancelled = true; };
   }, [player?.track?.artworkId]);
@@ -241,13 +270,13 @@ export default function App() {
   return <main
     className="app-shell"
     style={{
+
+
       '--highlight_color': highlight_color,
-      '--media_bg_color': media_bg_color,
+      '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
       '--media_text_color': media_text_color,
       '--mixer_bg_color': mixer_bg_color,
       '--mixer_text_color': mixer_text_color
-
-
 
     } as React.CSSProperties}
   >

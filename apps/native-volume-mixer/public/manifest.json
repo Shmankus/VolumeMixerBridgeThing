@@ -5,6 +5,13 @@
   "description": "Windows app volume mixer with BridgeThing media controls.",
   "config": [
     {
+      "type": "boolean",
+      "data": {
+        "key": "useArtworkColor",
+        "label": "Use Artwork Color for Media Background"
+      }
+    },
+    {
       "type": "string",
       "data": {
         "key": "media_bg_color",
@@ -52,3 +59,5 @@
     "api": 1
   }
 }
+
+

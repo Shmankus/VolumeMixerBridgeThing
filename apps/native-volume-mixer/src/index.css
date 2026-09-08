@@ -63,6 +63,7 @@ button {
     color: #161817;
     min-height: 100%;
     width: 100%;
+    transition: background-color 1s ease;
 
 
 }
@@ -82,10 +83,12 @@ button {
     background-position: center;
     background-size: cover;
     box-shadow: 12px 12px 0 color-mix(in srgb, var(--media_bg_color), #000 15%);
-    color: #962f3d;
+
+    color: color-mix(in srgb, var(--media_bg_color), #000 15%);
     font-family: 'DM Mono', monospace;
     font-size: 13px;
     letter-spacing: .08em;
+    transition: box-shadow 1s ease;
 }
 
 .artwork.expanded {
