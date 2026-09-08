@@ -6,3 +6,4 @@ site
 *.log
 .env*
 *.zip
+apps/native-volume-mixer/screenshots
