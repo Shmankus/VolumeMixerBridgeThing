@@ -93,7 +93,9 @@ button {
     aspect-ratio: 1;
     display: grid;
     place-items: center;
+    
     margin-bottom: 18px;
+    
     background: color-mix(in srgb, var(--media_bg_color), #000 15%);
     background-position: center;
     background-size: cover;
@@ -102,16 +104,19 @@ button {
     font-family: 'DM Mono', monospace;
     font-size: 13px;
     letter-spacing: .08em;
-    transition: box-shadow 1s ease, background 1s ease;
+    transition: box-shadow 1s ease;
+    margin-right: 9px;
+    
+
 }
 
 .artwork.expanded {
     order: 2;
     height: 100%;
     aspect-ratio: 1;
-    margin-bottom: 0px;
-    margin-top: 0px;
-    transition: 'all 0.5s ease-in-out',
+    margin: 0px;
+
+
 
 }
 
