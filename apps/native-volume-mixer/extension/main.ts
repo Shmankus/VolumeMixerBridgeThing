@@ -1,6 +1,16 @@
 // BridgeThing desktop extension: forwards webapp commands to the Windows mixer.
 import { asJson, defineExtension, json } from '@bridgething/extension';
 
+/*===========================================*
+*  THIS CHANGES WHAT APPS ARE RECOGNIZED FOR MIXER
+*============================================*/
+const watchedApps = [
+  { id: 'Discord', names: ['discord'] },
+  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
+  { id: 'AMPLibraryAgent', names: ['amplibraryagent'] },
+];
+
+
 type MixerMessage =
   | { type: 'volume:refresh' }
   | { type: 'volume:set'; appName: string; volume: number }
@@ -106,11 +116,7 @@ if (deno) {
   }
 }
 
-const watchedApps = [
-  { id: 'Discord', names: ['discord'] },
-  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
-  { id: 'AMPLibraryAgent', names: ['amplibraryagent'] },
-];
+
 
 function cleanName(value: string): string {
   return value.split(/[\\/]/).at(-1)?.replace(/\.exe$/i, '').toLowerCase() ?? '';

@@ -102,3 +102,47 @@ function Settings() {
 }
 
 createRoot(document.getElementById('root')!).render(<Settings />);
+
+
+/**
+{
+  "config": [
+    {
+      "type": "string",
+      "data": {
+        "key": "server_url",
+        "label": "Server URL"
+      }
+    },
+    {
+      "type": "number",
+      "data": {
+        "key": "volume",
+        "label": "Default volume"
+      }
+    },
+    {
+      "type": "boolean",
+      "data": {
+        "key": "enabled",
+        "label": "Enable mixer"
+      }
+    },
+    {
+      "type": "enum",
+      "data": {
+        "key": "theme",
+        "label": "Theme",
+        "choices": ["light", "dark", "system"]
+      }
+    },
+    {
+      "type": "secret",
+      "data": {
+        "key": "api_token",
+        "label": "API token"
+      }
+    }
+  ]
+}
+**/
