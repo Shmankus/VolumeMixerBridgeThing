@@ -92,6 +92,11 @@ export default function App() {
 
     });
 
+    client.config.get({ key: 'useArtworkColor' }).then(result => {
+      if (result.ok) {
+        setUseAlbumColor(result.response.value == 'true' ? true : false);
+      }
+    });
     client.config.get({ key: 'highlight_color' }).then(result => {
       if (result.ok) {
         set_highlight_color(result.response.value || '#ff5269');
