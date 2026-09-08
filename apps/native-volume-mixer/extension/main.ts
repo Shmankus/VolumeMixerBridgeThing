@@ -1,9 +1,6 @@
 // BridgeThing desktop extension: forwards webapp commands to the Windows mixer.
 import { asJson, defineExtension, json } from '@bridgething/extension';
 
-
-
-
 type MixerMessage =
   | { type: 'volume:refresh' }
   | { type: 'volume:set'; appName: string; volume: number }

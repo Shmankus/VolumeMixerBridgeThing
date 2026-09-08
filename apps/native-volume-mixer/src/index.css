@@ -70,7 +70,22 @@ button {
 
 .hero-panel.expanded {
     flex-direction: row;
+    width: 100%;
 
+}
+
+.progress-bar{
+    height: 15px;
+    background: var(--mixer_bg_color);
+  
+  
+}
+
+.progress{
+    background: var(--highlight_color);
+    z-index: 1;
+    height: 15px;
+  
 }
 
 .artwork {
@@ -95,6 +110,7 @@ button {
     height: 100%;
     aspect-ratio: 1;
     margin-bottom: 0px;
+    margin-top: 0px;
     transition: 'all 0.5s ease-in-out',
 
 }
@@ -113,7 +129,7 @@ button {
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
-    padding-right: 28px;
+  
 
 }
 
@@ -139,6 +155,7 @@ button {
     display: flex;
     flex-grow: 1;
     height: 100%;
+    padding-right: 28px;
 
 }
 

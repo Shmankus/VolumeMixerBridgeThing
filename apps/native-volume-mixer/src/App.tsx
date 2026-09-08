@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
 import { FastAverageColor } from 'fast-average-color';
+import { daemonUrl } from './daemon';
+
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
 
-const client = new BridgethingClient();
+const client = new BridgethingClient({ url: daemonUrl() });
 const labels: Record<string, string> = { AMPLibraryAgent: 'Apple Music' };
 
 // Demo app states
@@ -26,6 +28,15 @@ function isMixerError(value: unknown): value is MixerErrorMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:error';
 }
 
+// fix for crypto.randomUUID() not being available in bun dev:device
+function requestId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, character => {
+    const random = Math.random() * 16 | 0;
+    const value = character === 'x' ? random : random & 0x3 | 0x8;
+    return value.toString(16);
+  });
+}
 
 
 export async function getAverageColorFromUrl(url: string): Promise<string> {
@@ -62,6 +73,7 @@ export default function App() {
 
   //Player states and children
   const [player, setPlayer] = useState<PlayerState | null>(null); // player state (title, artist, album cover)
+  const [playerDurPerc, setPlayerDurPerc] = useState(0);
   const playing = player?.playback.state === 'playing';
   const title = player?.track?.title ?? 'Nothing playing';
   const artist = player?.track?.artist ?? 'BridgeThing media controls';
@@ -165,7 +177,7 @@ export default function App() {
     setArtworkUrl(null);
     if (!artworkId) return;
     let cancelled = false;
-    client.asset.get({ id: artworkId, requestId: globalThis.crypto.randomUUID() }).then(result => {
+    client.asset.get({ id: artworkId, requestId: requestId() }).then(result => {
       if (cancelled || !result.ok) return;
       const bytes = new Uint8Array(result.response.bytes).slice();
       const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
@@ -185,14 +197,35 @@ export default function App() {
     return () => { cancelled = true; };
   }, [player?.track?.artworkId]);
 
+
+  // interval that gathers player duration information
+  useEffect(() => {
+    // Set up the interval
+    const interval = setInterval(() => {
+
+      client.player.stateGet().then(result => result.ok
+        && result?.response?.state?.track?.durationMs
+        && setPlayerDurPerc((result.response.state.playback.positionMs / result.response.state.track?.durationMs) * 100));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+
+
   // Renders left hand album cover and media controls in dual screen mode
   function renderAlbum() {
+
+
     return (
       <motion.section
         layout
-        transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+  
+        transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.4 }}
+
         className={`hero-panel ${fullAlbum ? "expanded" : ""}`}
       >
+
         <motion.div
           layout
           className={`artwork ${fullAlbum ? "expanded" : ""}`}
@@ -203,6 +236,13 @@ export default function App() {
         </motion.div>
 
         <motion.div layout className={`now-playing ${fullAlbum ? 'expanded' : ''}`}>
+
+          <motion.div className="song-duration">
+            <motion.div className="progress-bar">
+              <motion.div className="progress" animate={{ width: `${playerDurPerc}%` }}></motion.div>
+            </motion.div>
+          </motion.div>
+
           <motion.div layout className={`transport ${fullAlbum ? 'expanded' : ''}`}>
             <motion.button
               layout
