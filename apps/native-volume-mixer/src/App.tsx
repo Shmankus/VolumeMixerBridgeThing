@@ -205,7 +205,7 @@ export default function App() {
           <motion.div layout className={`transport ${fullAlbum ? 'expanded' : ''}`}>
             <motion.button
               layout
-              onClick={() => send({ type: 'playback:previous' })}
+              onClick={() => client.player.skipPrev({ allowSeeking: true }).catch(() => undefined)}
               title="Previous track"
             >
               <motion.span layout>|&lt;</motion.span>
@@ -213,7 +213,7 @@ export default function App() {
             <motion.button
               layout
               className="transport-main"
-              onClick={() => send({ type: 'playback:playPause' })}
+              onClick={() => (playing ? client.player.pause() : client.player.resume()).catch(() => undefined)}
               title={playing ? 'Pause' : 'Play'}
             >
               <motion.span layout>{playing ? '||' : '>'}</motion.span>
@@ -221,7 +221,7 @@ export default function App() {
 
             <motion.button
               layout
-              onClick={() => send({ type: 'playback:next' })}
+              onClick={() => client.player.skipNext().catch(() => undefined)}
               title="Next track"
             >
               <motion.span layout>&gt;|</motion.span>

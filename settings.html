@@ -1,0 +1,14 @@
+import { settings } from '@bridgething/client/settings';
+
+const { webappId, name } = await settings.context();
+
+// the user's saved config values (and the manifest schema, for rendering a form)
+const fields = await settings.config.fields();
+const values = await settings.config.list();
+await settings.config.set('base_url', url);
+
+// the shared doc namespace: what your phone-side page authors, your on-device webapp reads
+await settings.doc.set('selected_entities', ids.join(','));
+const off = settings.onDocChanged((key, value) => sync(key, value));
+
+settings.done(); // closes the sheet

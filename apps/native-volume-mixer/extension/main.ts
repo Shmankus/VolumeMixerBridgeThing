@@ -1,29 +1,17 @@
 // BridgeThing desktop extension: forwards webapp commands to the Windows mixer.
 import { asJson, defineExtension, json } from '@bridgething/extension';
 
-/*===========================================*
-*  THIS CHANGES WHAT APPS ARE RECOGNIZED FOR MIXER
-*============================================*/
-const watchedApps = [
-  { id: 'Discord', names: ['discord'] },
-  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
-  { id: 'AMPLibraryAgent', names: ['amplibraryagent'] },
-];
+
 
 
 type MixerMessage =
   | { type: 'volume:refresh' }
   | { type: 'volume:set'; appName: string; volume: number }
-  | { type: 'volume:toggleMute'; appName: string }
-  | { type: 'playback:previous' }
-  | { type: 'playback:playPause' }
-  | { type: 'playback:next' };
+  | { type: 'volume:toggleMute'; appName: string };
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type MixerClient = { request(message: MixerMessage): Promise<AppState> };
 
-type Mixer = { devices?: any[] };
-let mixer: Mixer = { devices: [] };
 let mixerClient: MixerClient | undefined;
 let nativeLoadError: unknown;
 
@@ -106,47 +94,7 @@ if (deno) {
     nativeLoadError = error;
   }
 } else {
-  try {
-    const { createRequire } = await import('node:module');
-    const require = createRequire(import.meta.url);
-    const addon = require('./runtime/win32-x64/win-sound-mixer.node');
-    mixer = addon.SoundMixer ?? addon.default ?? addon;
-  } catch (error) {
-    nativeLoadError = error;
-  }
-}
-
-
-
-function cleanName(value: string): string {
-  return value.split(/[\\/]/).at(-1)?.replace(/\.exe$/i, '').toLowerCase() ?? '';
-}
-
-/** Returns the session's executable name in the shape used by watchedApps. */
-function sessionName(session: any): string {
-  return session.appName ?? session.name ?? '';
-}
-
-/** Reads the native mixer's current device graph and flattens its sessions. */
-function sessions(): any[] {
-  return (mixer.devices ?? []).flatMap(device => device.sessions ?? []);
-}
-
-/** Builds the UI state, using -1 to distinguish an absent app from volume 0. */
-function snapshot(): AppState {
-  return Object.fromEntries(watchedApps.map(app => {
-    const session = sessions().find(item => app.names.includes(cleanName(sessionName(item))));
-    return [app.id, {
-      volume: session ? Math.round((session.volume ?? 0) * 100) : -1,
-      muted: Boolean(session?.mute),
-    }];
-  }));
-}
-
-/** Finds all matching sessions so duplicate audio endpoints are controlled together. */
-function findSessions(appName: string): any[] {
-  const app = watchedApps.find(item => item.id === appName);
-  return sessions().filter(item => app?.names.includes(cleanName(sessionName(item))));
+  nativeLoadError = new Error('The desktop extension requires Deno');
 }
 
 defineExtension({
@@ -154,7 +102,7 @@ defineExtension({
     if (nativeLoadError) ctx.log.error('Native mixer failed to load:', nativeLoadError);
 
     let apps: AppState = {};
-    const sendState = () => ctx.broadcast(json({ type: 'volume:state', apps: mixerClient ? apps : snapshot() }));
+    const sendState = () => ctx.broadcast(json({ type: 'volume:state', apps }));
     if (nativeLoadError) {
       ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(nativeLoadError)}` }));
     }
@@ -171,24 +119,14 @@ defineExtension({
     ctx.on('message', (_device, message) => {
       const payload = asJson<MixerMessage>(message);
       if (!payload) return;
-      if (mixerClient) {
-        void mixerClient.request(payload).then(next => {
-          apps = next;
-          sendState();
-        }).catch(error => {
-          ctx.log.error('Mixer helper failed:', error);
-          ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(error)}` }));
-        });
-        return;
-      }
-      if (payload.type === 'volume:set' && Number.isFinite(payload.volume)) {
-        for (const session of findSessions(payload.appName)) {
-          session.volume = Math.max(0, Math.min(100, payload.volume)) / 100;
-        }
-      }
-      if (payload.type === 'volume:toggleMute') {
-        for (const session of findSessions(payload.appName)) session.mute = !session.mute;
-      }
+      if (!mixerClient) return;
+      void mixerClient.request(payload).then(next => {
+        apps = next;
+        sendState();
+      }).catch(error => {
+        ctx.log.error('Mixer helper failed:', error);
+        ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(error)}` }));
+      });
       sendState();
     });
     refreshState();

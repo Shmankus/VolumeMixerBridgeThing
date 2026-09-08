@@ -3,6 +3,11 @@ const readline = require('node:readline');
 const mixerModule = require('./win-sound-mixer.node');
 const mixer = mixerModule.SoundMixer ?? mixerModule.default ?? mixerModule;
 
+
+/*===========================================*
+*  THIS CHANGES WHAT APPS ARE RECOGNIZED FOR MIXER
+*============================================*/
+
 const watchedApps = [
   { id: 'Discord', names: ['discord'] },
   { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
