@@ -1,4 +1,4 @@
-// Node-side bridge: runs Windows media keys and delegates mixer work to a fresh worker.
+// Node-side bridge: delegates Windows mixer work to a fresh worker.
 const readline = require('node:readline');
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
@@ -19,9 +19,11 @@ function handle(request) {
 
 const input = readline.createInterface({ input: process.stdin });
 input.on('line', line => {
+  let request;
   try {
-    process.stdout.write(`${JSON.stringify(handle(JSON.parse(line)))}\n`);
+    request = JSON.parse(line);
+    process.stdout.write(`${JSON.stringify(handle(request))}\n`);
   } catch (error) {
-    process.stdout.write(`${JSON.stringify({ id: null, error: String(error) })}\n`);
+    process.stdout.write(`${JSON.stringify({ id: request?.id ?? null, error: String(error) })}\n`);
   }
 });
