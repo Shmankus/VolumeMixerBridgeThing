@@ -9,28 +9,24 @@ type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient();
 const labels: Record<string, string> = { AMPLibraryAgent: 'Apple Music' };
+
+// Demo app states
 const demoApps: AppState = {
   App1: { volume: 72, muted: false },
   App2: { volume: 48, muted: false },
   App3: { volume: 86, muted: false },
 };
 
+// makes sure value is regarding volume states
 function isVolumeState(value: unknown): value is VolumeStateMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:state';
 }
-
+// makes sure value is regarding mixer states
 function isMixerError(value: unknown): value is MixerErrorMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:error';
 }
 
-function requestId(): string {
-  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, character => {
-    const random = Math.random() * 16 | 0;
-    const value = character === 'x' ? random : random & 0x3 | 0x8;
-    return value.toString(16);
-  });
-}
+
 
 export async function getAverageColorFromUrl(url: string): Promise<string> {
   if (!url) return '#ffffff';
@@ -45,32 +41,50 @@ export async function getAverageColorFromUrl(url: string): Promise<string> {
   }
 }
 export default function App() {
-  const [apps, setApps] = useState<AppState>({});
-  const [player, setPlayer] = useState<PlayerState | null>(null);
-  const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
-  const [useAlbumColor, setUseAlbumColor] = useState(false);
+
+  // UI Color
   const [artworkBg, setArtworkBg] = useState<string>("#080000");
-  const [mixerError, setMixerError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(false);
-
-
-  const [fullAlbum, setfullAlbum] = useState(false);
-
   const [highlight_color, set_highlight_color] = useState('#ff5269');
-
   const [media_bg_color, set_media_bg_color] = useState('#ff5269');
   const [media_text_color, set_media_text_color] = useState('#000000');
-
   const [mixer_bg_color, set_mixer_bg_color] = useState('#202322');
   const [mixer_text_color, set_mixer_text_color] = useState('#f4f1e8');
 
+  // UI helpers
+  const [useAlbumColor, setUseAlbumColor] = useState(false); // decides if album cover determines background color
+  const [fullAlbum, setfullAlbum] = useState(false); // decides if media player is full screen or not
+
+  // Mixer States and children
+  const [apps, setApps] = useState<AppState>({}); // sets apps to show on mixer
+  const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
+  const showingDemoApps = Object.keys(apps).length === 0;
+  const send = (message: object) => client.forward.json(message).catch(() => undefined);
+
+  //Player states and children
+  const [player, setPlayer] = useState<PlayerState | null>(null); // player state (title, artist, album cover)
+  const playing = player?.playback.state === 'playing';
+  const title = player?.track?.title ?? 'Nothing playing';
+  const artist = player?.track?.artist ?? 'BridgeThing media controls';
+
+  // App states
+  const [artworkUrl, setArtworkUrl] = useState<string | null>(null); // album cover url that comes from player state
+  const [mixerError, setMixerError] = useState<string | null>(null); // decides if mixer will show fake data
+  const [connected, setConnected] = useState(false); // check for if webapp is connected to desktop app
+
+
+
+
+
+
+
+
+
   useEffect(() => {
 
+    // on settings change
     const offConfig = client.config.onChanged(change => {
-
-
       if (change.key === 'useArtworkColor') {
-        setUseAlbumColor(change.value == "true" ? true : false );
+        setUseAlbumColor(change.value == "true" ? true : false);
       }
       if (change.key === 'highlight_color') {
         set_highlight_color(change.value || '#ff5269');
@@ -88,10 +102,9 @@ export default function App() {
       if (change.key === 'mixer_text_color') {
         set_mixer_text_color(change.value || '#f4f1e8');
       }
-
-
     });
 
+    // on mount
     client.config.get({ key: 'useArtworkColor' }).then(result => {
       if (result.ok) {
         setUseAlbumColor(result.response.value == 'true' ? true : false);
@@ -124,18 +137,15 @@ export default function App() {
         set_mixer_text_color(result.response.value || '#f4f1e8');
       }
     });
-
-
     return offConfig;
   }, []);
 
-
-
+  // handles album cover pointer event to toggle fullscreen
   const handleAlbumCoverTap = () => {
     setfullAlbum((fullAlbum) => !fullAlbum);
   };
 
-
+  // handles media player info from serverand sets the states accordingly
   useEffect(() => {
     const offPlayer = client.player.onSnapshot(reply => setPlayer(reply.state));
     const offForward = client.forward.onJson(message => {
@@ -156,17 +166,17 @@ export default function App() {
     return () => { offPlayer(); offForward(); offCapabilities(); };
   }, []);
 
+  // turns artwork into a workable URL for rendering, also sets artwork average color state
   useEffect(() => {
     const artworkId = player?.track?.artworkId;
     setArtworkUrl(null);
     if (!artworkId) return;
     let cancelled = false;
-    client.asset.get({ id: artworkId, requestId: requestId() }).then(result => {
+    client.asset.get({ id: artworkId, requestId: globalThis.crypto.randomUUID() }).then(result => {
       if (cancelled || !result.ok) return;
       const bytes = new Uint8Array(result.response.bytes).slice();
       const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
 
-      // 2. Fetch the color asynchronously
       getAverageColorFromUrl(url)
         .then((hexColor) => {
           setArtworkBg(hexColor)
@@ -182,12 +192,7 @@ export default function App() {
     return () => { cancelled = true; };
   }, [player?.track?.artworkId]);
 
-  const playing = player?.playback.state === 'playing';
-  const send = (message: object) => client.forward.json(message).catch(() => undefined);
-  const title = player?.track?.title ?? 'Nothing playing';
-  const artist = player?.track?.artist ?? 'BridgeThing media controls';
-  const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
-  const showingDemoApps = Object.keys(apps).length === 0;
+
 
 
   function renderAlbum() {
@@ -244,7 +249,7 @@ export default function App() {
     )
   }
 
-
+  // Renders right hand mixer in dual screen mode
   function renderMixer() {
     return (<section className="mixer-panel">
       <header><span>hi</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
@@ -272,21 +277,20 @@ export default function App() {
   }
 
 
-  return <main
-    className="app-shell"
-    style={{
+  return (
+    <main
+      className="app-shell"
+      style={{
+        '--highlight_color': highlight_color,
+        '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
+        '--media_text_color': media_text_color,
+        '--mixer_bg_color': mixer_bg_color,
+        '--mixer_text_color': mixer_text_color
+      } as React.CSSProperties}>
 
+      {renderAlbum && renderAlbum()}
+      {!fullAlbum && renderMixer()}
 
-      '--highlight_color': highlight_color,
-      '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
-      '--media_text_color': media_text_color,
-      '--mixer_bg_color': mixer_bg_color,
-      '--mixer_text_color': mixer_text_color
-
-    } as React.CSSProperties}
-  >
-    {renderAlbum && renderAlbum()}
-    {!fullAlbum && renderMixer()}
-
-  </main>;
+    </main>
+  );
 }
