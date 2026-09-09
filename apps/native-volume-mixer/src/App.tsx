@@ -1,9 +1,25 @@
-// Main webapp UI: displays media controls, artwork, and Windows app volumes.
-import { useEffect, useState } from 'react';
+/**
+ * @fileoverview Main app, includes album cover, media controls, and volume mixer. Handles communication with the extension and player state.
+ * 
+ * @module App
+ * @requires react
+ * @requires framer-motion
+ * @requires fast-average-color
+ * @requires bridgething-client
+ * @requires serverSenders
+ * 
+ * @requires daemon
+ * @requires inputHandler
+ */
+
+import { useEffect, useState, useRef } from 'react';
 import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
 import { FastAverageColor } from 'fast-average-color';
 import { daemonUrl } from './daemon';
+
+import { scrollHandler,selectionHandler, useDebugHardwareEvents } from './inputHandler';
+
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
@@ -51,6 +67,8 @@ export async function getAverageColorFromUrl(url: string): Promise<string> {
     return '#ffffff'; // Fallback color on error
   }
 }
+
+
 export default function App() {
 
   // UI Color
@@ -67,6 +85,7 @@ export default function App() {
 
   // Mixer States and children
   const [apps, setApps] = useState<AppState>({}); // sets apps to show on mixer
+  const [selectedApp, setSelectedApp] = useState<string>(""); // sets which app is selected for mixer
   const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
   const showingDemoApps = Object.keys(apps).length === 0;
   const send = (message: object) => client.forward.json(message).catch(() => undefined);
@@ -83,6 +102,10 @@ export default function App() {
   const [mixerError, setMixerError] = useState<string | null>(null); // decides if mixer will show fake data
   const [connected, setConnected] = useState(false); // check for if webapp is connected to desktop app
 
+
+  // Keeps track of whether a scroll action is currently active
+  const [isScrollActive, setIsScrollActive] = useState(false); // prevents outgoing volume updates to server
+  const isScrollActiveRef = useRef(isScrollActive); // blocks incoming volume updates while scrolling
 
   useEffect(() => {
 
@@ -148,27 +171,46 @@ export default function App() {
   // handles album cover pointer event to toggle fullscreen
   const handleAlbumCoverTap = () => {
     setfullAlbum((fullAlbum) => !fullAlbum);
+
   };
 
-  // handles media player info from serverand sets the states accordingly
+
+  // helper to keep track of scroll state in a ref for use in event callbacks
   useEffect(() => {
-    const offPlayer = client.player.onSnapshot(reply => setPlayer(reply.state));
-    const offForward = client.forward.onJson(message => {
-      if (isVolumeState(message)) setApps(message.apps);
+    isScrollActiveRef.current = isScrollActive;
+  }, [isScrollActive]);
+
+  useEffect(() => {
+    const offPlayer = client.player.onSnapshot((reply) => setPlayer(reply.state));
+
+    const offForward = client.forward.onJson((message) => {
+      // Check the ref to see if scrolling is currently active
+      if (isVolumeState(message)) {
+        if (isScrollActiveRef.current) return; // Block incoming volume updates mid-scroll
+        setApps(message.apps);
+      }
       if (isMixerError(message)) setMixerError(message.message);
     });
+
     const updateForwardAvailability = (available: boolean) => {
       setConnected(available);
-      if (available) client.forward.json({ type: 'volume:refresh' }).catch(() => undefined);
+      if (available) client.forward.json({ type: "volume:refresh" }).catch(() => undefined);
     };
-    const offCapabilities = client.capabilities.onSnapshot(snapshot => {
+
+    const offCapabilities = client.capabilities.onSnapshot((snapshot) => {
       updateForwardAvailability(snapshot.capabilities.available.forward);
     });
-    client.player.stateGet().then(result => result.ok && setPlayer(result.response.state));
-    client.capabilities.get().then(result => {
+
+    client.player.stateGet().then((result) => result.ok && setPlayer(result.response.state));
+    client.capabilities.get().then((result) => {
       updateForwardAvailability(result.ok && result.response.capabilities.available.forward);
     });
-    return () => { offPlayer(); offForward(); offCapabilities(); };
+
+    return () => {
+      offPlayer();
+      offForward();
+      offCapabilities();
+    };
   }, []);
 
   // turns artwork into a workable URL for rendering, also sets artwork average color state
@@ -213,14 +255,13 @@ export default function App() {
 
 
 
-  // Renders left hand album cover and media controls in dual screen mode
   function renderAlbum() {
 
 
     return (
       <motion.section
         layout
-  
+
         transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.4 }}
 
         className={`hero-panel ${fullAlbum ? "expanded" : ""}`}
@@ -283,20 +324,35 @@ export default function App() {
   // Renders right hand mixer in dual screen mode 
   function renderMixer() {
     return (<section className="mixer-panel">
-      <header><span>hi</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
+      <header><span>{selectedApp ?? 'None'}</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'EXTENSION CONNECTED' : 'CONNECTING'}</small></div></header>
       <div className="mixer-list">
         {Object.entries(displayedApps).map(([appName, state]) => {
           const unavailable = state.volume < 0;
-          return <article className="mixer-row" key={appName}>
+          return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(appName))}>
             <div className="row-top"><strong>{labels[appName] ?? appName}</strong><span>{unavailable ? '--' : `${state.volume}%`}</span></div>
             <div className="row-bottom">
               <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !showingDemoApps && !unavailable && send({ type: 'volume:toggleMute', appName })} disabled={showingDemoApps || unavailable} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
-              <input type="range" min="0" max="100" value={unavailable ? 0 : state.volume} disabled={showingDemoApps || unavailable} onChange={event => {
-                const volume = Number(event.target.value);
-                setApps(previous => ({ ...previous, [appName]: { ...previous[appName], volume } }));
-                send({ type: 'volume:set', appName, volume }); // send volume change to server
-              }} />
-              <span className="availability">{showingDemoApps ? 'DEMO' : unavailable ? 'NOT OPEN' : 'ACTIVE'}</span>
+              <input
+                id={`volume-${appName}`}
+                type="range"
+                min="0"
+                max="100"
+                value={unavailable ? 0 : state.volume}
+                disabled={showingDemoApps || unavailable}
+                onChange={(event) => {
+                  const volume = Number(event.target.value);
+
+                  setApps((previous) => ({
+                    ...previous,
+                    [appName]: { ...previous[appName], volume },
+                  }));
+
+                  if (!isScrollActive) {
+                    send({ type: "volume:set", appName, volume });
+                  }
+                }}
+              />
+
             </div>
           </article>;
         })}
@@ -307,9 +363,16 @@ export default function App() {
 
   }
 
-  // Renders the main app shell with album cover and mixer
+
+
+
+  useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
+  scrollHandler(selectedApp, showingDemoApps, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
+  selectionHandler(client, apps, demoApps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
   return (
+
     <main
+
       className="app-shell"
       style={{
         '--highlight_color': highlight_color,
