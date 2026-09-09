@@ -102,7 +102,7 @@ export function selectionHandler(
 
       if (!appName) return;
 
-      setSelectedApp(appName);
+      setSelectedApp(prev => prev === appName ? "" : appName); // toggle selection of the app if it's already selected, otherwise select it
       sendServerLog(client, `[KEY SELECTION] Selected app: ${appName}`);
     };
 
