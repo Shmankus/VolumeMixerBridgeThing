@@ -328,7 +328,7 @@ export default function App() {
       <div className="mixer-list">
         {Object.entries(displayedApps).map(([appName, state]) => {
           const unavailable = state.volume < 0;
-          return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(appName))}>
+          return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
             <div className="row-top"><strong>{labels[appName] ?? appName}</strong><span>{unavailable ? '--' : `${state.volume}%`}</span></div>
             <div className="row-bottom">
               <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !showingDemoApps && !unavailable && send({ type: 'volume:toggleMute', appName })} disabled={showingDemoApps || unavailable} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
