@@ -5,6 +5,13 @@
   "description": "Windows app volume mixer with BridgeThing media controls.",
   "config": [
     {
+      "type": "string",
+      "data": {
+        "key": "tracked_apps",
+        "label": "Tracked Apps (Firefox|{firefox,mozilla firefox},Spotify|{spotify,etc...})"
+      }
+    },
+    {
       "type": "boolean",
       "data": {
         "key": "useArtworkColor",

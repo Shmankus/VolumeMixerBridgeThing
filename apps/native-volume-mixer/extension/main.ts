@@ -9,6 +9,8 @@
  */
 
 import { asJson, defineExtension, json } from '@bridgething/extension';
+import {setWatchedApps} from './runtime/win32-x64/mixer-worker.cjs';
+
 // The webapp can send messages to the extension to request mixer state or change volume.
 type MixerMessage =
   | { type: 'volume:refresh' }
@@ -18,12 +20,15 @@ type MixerMessage =
 type AppMessage =
   | { type: 'app:log'; message: string }
   | MixerMessage;
+type Apps_SettingsUpdateMessage = { type: 'apps_settings:update'; message: string };
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type MixerClient = { request(message: MixerMessage): Promise<AppState> };
 
 let mixerClient: MixerClient | undefined;
 let nativeLoadError: unknown;
+
+let trackedApps: { id: string; names: string[] }[] = [];
 
 
 
@@ -33,6 +38,21 @@ function fileUrlToWindowsPath(url: URL): string {
   const path = decodeURIComponent(url.pathname);
   return /^\/[A-Za-z]:\//.test(path) ? path.slice(1).replaceAll('/', '\\') : path;
 }
+
+
+// turn Firefox|{firefox,mozilla firefox} into {id: "Firefox", names: ["firefox", "mozilla firefox"]}
+function readSettingsFromString(settings: string): { id: string; names: string[] }[] {
+  const apps: { id: string; names: string[] }[] = [];
+  for (const entry of settings.split(',')) {
+    const [id, names] = entry.split('|');
+    if (!id || !names) continue;
+    const namesArray = names.replace(/^\{|\}$/g, '').split(',').map(name => name.trim()).filter(Boolean);
+    if (namesArray.length > 0) apps.push({ id: id.trim(), names: namesArray });
+  }
+  return apps;
+}
+
+ 
 
 /** Starts the hidden Node bridge that can load the Windows-only native addon. */
 function createMixerClient(deno: any): MixerClient {
@@ -136,11 +156,18 @@ defineExtension({
     });
 
     ctx.on('message', (_device, message) => {
-      const payload = asJson<AppMessage>(message);
+      const payload = asJson<AppMessage | Apps_SettingsUpdateMessage>(message);
       if (!payload) return;
 
       if (payload.type === 'app:log') {
         ctx.log.info('webapp log:', payload.message);
+        return;
+      }
+
+      if (payload.type === 'apps_settings:update') {
+        trackedApps = readSettingsFromString(payload.message);
+        ctx.log.info('new apps settings received:', JSON.stringify(trackedApps));
+        setWatchedApps(trackedApps);
         return;
       }
 

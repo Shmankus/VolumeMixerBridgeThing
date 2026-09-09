@@ -3,16 +3,24 @@ const readline = require('node:readline');
 const mixerModule = require('./win-sound-mixer.node');
 const mixer = mixerModule.SoundMixer ?? mixerModule.default ?? mixerModule;
 
+let watchedApps = [
+  { id: 'Discord', names: ['discord'] },
+  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
+  { id: 'Apple Music', names: ['amplibraryagent'] },
+];
+
+export function setWatchedApps(apps) {
+  watchedApps = apps;
+}
+
+  
+    
 
 /*===========================================*
 *  THIS CHANGES WHAT APPS ARE RECOGNIZED FOR MIXER
 *============================================*/
 
-const watchedApps = [
-  { id: 'Discord', names: ['discord'] },
-  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
-  { id: 'AMPLibraryAgent', names: ['amplibraryagent'] },
-];
+
 
 function cleanName(value) {
   return value.split(/[\\/]/).at(-1)?.replace(/\.exe$/i, '').toLowerCase() ?? '';
