@@ -96,8 +96,8 @@ export function selectionHandler(
 
       if (!Number.isInteger(key) || key < 1) return;
 
-      const source = Object.keys(apps).length > 0 ? apps : demoApps;
-      const appNames = Object.keys(source);
+      const source = Object.keys(apps).length > 0 ? apps : demoApps; // gets the source of apps to select from, either the real apps or demo apps if no real apps are present
+      const appNames = Object.keys(source); // gets the names of the apps in the source
       const appName = appNames[key - 1];
 
       if (!appName) return;
