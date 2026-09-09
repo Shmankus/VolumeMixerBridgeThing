@@ -1,16 +1,31 @@
-// BridgeThing desktop extension: forwards webapp commands to the Windows mixer.
-import { asJson, defineExtension, json } from '@bridgething/extension';
 
+/**
+ * @fileoverview This file handles the server side of the native volume mixer extension, 
+ * including starting the hidden Node bridge and communicating with the Windows-only native addon.
+ * 
+ * @module main
+ * @requires bridgething-extension
+ * 
+ */
+
+import { asJson, defineExtension, json } from '@bridgething/extension';
+// The webapp can send messages to the extension to request mixer state or change volume.
 type MixerMessage =
   | { type: 'volume:refresh' }
   | { type: 'volume:set'; appName: string; volume: number }
   | { type: 'volume:toggleMute'; appName: string };
+// The webapp can send log messages to the extension log for debugging purposes.
+type AppMessage =
+  | { type: 'app:log'; message: string }
+  | MixerMessage;
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type MixerClient = { request(message: MixerMessage): Promise<AppState> };
 
 let mixerClient: MixerClient | undefined;
 let nativeLoadError: unknown;
+
+
 
 function fileUrlToWindowsPath(url: URL): string {
   // BridgeThing's Deno build does not expose Deno.fromFileUrl, so convert the
@@ -93,30 +108,49 @@ if (deno) {
 } else {
   nativeLoadError = new Error('The desktop extension requires Deno');
 }
-
 defineExtension({
   start(ctx) {
     if (nativeLoadError) ctx.log.error('Native mixer failed to load:', nativeLoadError);
 
     let apps: AppState = {};
+    let lastSetTime = 0; // Track the last time a user changed volume
     const sendState = () => ctx.broadcast(json({ type: 'volume:state', apps }));
+
     if (nativeLoadError) {
       ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(nativeLoadError)}` }));
     }
+
     const refreshState = () => mixerClient?.request({ type: 'volume:refresh' }).then(next => {
+      // Ignore background refresh if the user changed volume within the last 3 seconds
+      if (Date.now() - lastSetTime < 3000) return;
+
       apps = next;
       sendState();
     }).catch(error => {
       ctx.log.error('Mixer helper failed:', error);
       ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(error)}` }));
     });
+
     ctx.on('device', event => {
       if (event.type === 'connected' || event.type === 'active') refreshState() ?? sendState();
     });
+
     ctx.on('message', (_device, message) => {
-      const payload = asJson<MixerMessage>(message);
+      const payload = asJson<AppMessage>(message);
       if (!payload) return;
+
+      if (payload.type === 'app:log') {
+        ctx.log.info('webapp log:', payload.message);
+        return;
+      }
+
       if (!mixerClient) return;
+
+      // Track whenever a volume update requested
+      if (payload.type === 'volume:set') {
+        lastSetTime = Date.now();
+      }
+
       void mixerClient.request(payload).then(next => {
         apps = next;
         sendState();
@@ -124,13 +158,16 @@ defineExtension({
         ctx.log.error('Mixer helper failed:', error);
         ctx.broadcast(json({ type: 'volume:error', message: `Windows mixer unavailable: ${String(error)}` }));
       });
-      sendState();
     });
+
     refreshState();
+
+    // Polling loop
     setInterval(() => {
       if (mixerClient) refreshState();
       else sendState();
     }, 2_000);
+
     ctx.log.info('Volume mixer extension ready');
   },
 });
