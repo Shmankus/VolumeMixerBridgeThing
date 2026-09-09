@@ -7,6 +7,8 @@ const path = require('node:path');
 function handle(request) {
   // A new process forces native-sound-mixer to enumerate the current Windows devices.
   const worker = spawnSync(process.execPath, [path.join(__dirname, 'mixer-worker.cjs')], {
+
+    // main extention -> request (app data) -> mixer-worker
     input: JSON.stringify(request),
     encoding: 'utf8',
     windowsHide: true,
@@ -14,9 +16,11 @@ function handle(request) {
   if (worker.error) throw worker.error;
   const response = JSON.parse(worker.stdout || '{}');
   if (response.error) throw new Error(response.error);
+  // mixer-worker -> response (app info) -> main extention
   return { id: request.id, apps: response.apps };
 }
 
+// Single stdin reader for processing worker request
 const input = readline.createInterface({ input: process.stdin });
 input.on('line', line => {
   let request;

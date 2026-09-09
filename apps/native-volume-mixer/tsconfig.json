@@ -6,7 +6,6 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "allowJs": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",

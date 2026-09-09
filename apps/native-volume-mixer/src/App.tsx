@@ -35,6 +35,10 @@ const demoApps: AppState = {
   App3: { volume: 86, muted: false },
 };
 
+
+const defaultApps = "Firefox|{firefox,mozilla firefox},Apple Music|{amplibraryagent},Discord|{discord}";
+
+
 // makes sure value is regarding volume states
 function isVolumeState(value: unknown): value is VolumeStateMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === 'volume:state';
@@ -112,10 +116,11 @@ export default function App() {
     // on settings change
     const offConfig = client.config.onChanged(change => {
       if (change.key === 'tracked_apps') {
-
         const send = (message: object) =>
           client.forward.json(message).catch(() => undefined);
-        send({ type: 'apps_settings:update', message: change.value });
+
+        // tracked apps from settings -> main mixer extension
+        send({ type: 'apps_settings:update', message: change.value  == "" ? defaultApps : change.value });
       }
       if (change.key === 'useArtworkColor') {
         setUseAlbumColor(change.value == "true" ? true : false);
@@ -139,11 +144,10 @@ export default function App() {
     });
 
     // on mount
-     client.config.get({ key: 'tracked_apps' }).then(result => {
+    client.config.get({ key: 'tracked_apps' }).then(result => {
       if (result.ok) {
-         const send = (message: object) =>
-          client.forward.json(message).catch(() => undefined);
-        send({ type: 'apps_settings:update', message: result.response.value });
+
+        send({ type: 'apps_settings:update', message: defaultApps });
       }
     });
     client.config.get({ key: 'useArtworkColor' }).then(result => {
@@ -193,38 +197,52 @@ export default function App() {
     isScrollActiveRef.current = isScrollActive;
   }, [isScrollActive]);
 
-  useEffect(() => {
-    const offPlayer = client.player.onSnapshot((reply) => setPlayer(reply.state));
 
-    const offForward = client.forward.onJson((message) => {
-      // Check the ref to see if scrolling is currently active
+  // Subscribes to real-time events (media player, volume updates, connection status) and syncs them to React state
+  useEffect(() => {
+
+    // detects change in server player state and updates local player state
+    const onPlayerUpdate = client.player.onSnapshot((reply) => setPlayer(reply.state));
+
+    // detects incoming statuses such as volume and app changes
+    const onServerUpdate = client.forward.onJson((message) => {
+
+      // sees incoming updates on volume states
       if (isVolumeState(message)) {
         if (isScrollActiveRef.current) return; // Block incoming volume updates mid-scroll
+
+        // main extension -> message -> global app state
         setApps(message.apps);
       }
+
+      // sees incoming updates on mixer errors
       if (isMixerError(message)) setMixerError(message.message);
     });
 
+    // sets connection status and triggers volume refresh with server if newly connected
     const updateForwardAvailability = (available: boolean) => {
       setConnected(available);
       if (available) client.forward.json({ type: "volume:refresh" }).catch(() => undefined);
     };
 
-    const offCapabilities = client.capabilities.onSnapshot((snapshot) => {
+    // sees change in capabilities such as if server is reachable
+    const onCapabilityUpdate = client.capabilities.onSnapshot((snapshot) => {
       updateForwardAvailability(snapshot.capabilities.available.forward);
     });
 
+    // initial player state fetch then updates local state
     client.player.stateGet().then((result) => result.ok && setPlayer(result.response.state));
+    // initial capabilities state fetch then updates local state
     client.capabilities.get().then((result) => {
       updateForwardAvailability(result.ok && result.response.capabilities.available.forward);
     });
-
     return () => {
-      offPlayer();
-      offForward();
-      offCapabilities();
+      onPlayerUpdate();
+      onServerUpdate();
+      onCapabilityUpdate();
     };
   }, []);
+
 
   // turns artwork into a workable URL for rendering, also sets artwork average color state
   useEffect(() => {
