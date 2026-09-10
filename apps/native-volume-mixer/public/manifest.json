@@ -15,7 +15,7 @@
       "type": "boolean",
       "data": {
         "key": "useArtworkColor",
-        "label": "Use Artwork Color for Media Background"
+        "label": "Use Artwork Color for Media Colors"
       }
     },
     {

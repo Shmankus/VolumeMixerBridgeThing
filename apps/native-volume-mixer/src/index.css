@@ -5,11 +5,7 @@
     color: #f4f1e8;
     background: #161817;
     font-synthesis: none;
-    --highlight_color: #ff5269;
-    --media_bg_color: #ff5269;
-    --media_text_color: #000000;
-    --mixer_bg_color: #202322;
-    --mixer_text_color: #f4f1e8;
+
 
 }
 
@@ -74,18 +70,35 @@ button {
 
 }
 
-.progress-bar{
+.progress-bar {
     height: 15px;
-    background: var(--mixer_bg_color);
-  
-  
-}
 
-.progress{
-    background: var(--highlight_color);
+    /* Makes progress bar background oppisite brightness of background by 50%*/
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background-color 1s ease;
     z-index: 1;
     height: 15px;
-  
+
+
+}
+
+.progress {
+
+    /* Makes progress background oppisite brightness of background by 75%*/
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 75%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 75%);
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background-color 1s ease;
+    z-index: 1;
+    height: 15px;
+
 }
 
 .artwork {
@@ -93,9 +106,9 @@ button {
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    
+
     margin-bottom: 18px;
-    
+
     background: color-mix(in srgb, var(--media_bg_color), #000 15%);
     background-position: center;
     background-size: cover;
@@ -106,7 +119,7 @@ button {
     letter-spacing: .08em;
     transition: box-shadow 1s ease;
     margin-right: 9px;
-    
+
 
 }
 
@@ -134,7 +147,7 @@ button {
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
-  
+
 
 }
 
