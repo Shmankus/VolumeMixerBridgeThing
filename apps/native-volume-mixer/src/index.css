@@ -83,12 +83,9 @@ button {
     transition: background-color 1s ease;
     z-index: 1;
     height: 15px;
-
-
 }
 
 .progress {
-
     /* Makes progress background oppisite brightness of background by 75%*/
     --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 75%);
     --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 75%);
@@ -98,7 +95,6 @@ button {
     transition: background-color 1s ease;
     z-index: 1;
     height: 15px;
-
 }
 
 .artwork {
@@ -106,9 +102,7 @@ button {
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-
     margin-bottom: 18px;
-
     background: color-mix(in srgb, var(--media_bg_color), #000 15%);
     background-position: center;
     background-size: cover;
@@ -119,18 +113,15 @@ button {
     letter-spacing: .08em;
     transition: box-shadow 1s ease;
     margin-right: 9px;
-
-
 }
 
 .artwork.expanded {
     order: 2;
-    height: 100%;
     aspect-ratio: 1;
     margin: 0px;
-
-
-
+    max-width: 60%;
+    max-height: max-content;
+    object-fit: cover; 
 }
 
 
@@ -139,7 +130,6 @@ button {
     gap: 10px;
     margin-top: 5px;
     justify-content: center;
-
 }
 
 
@@ -147,8 +137,6 @@ button {
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
-
-
 }
 
 .music {
@@ -160,7 +148,7 @@ button {
 }
 
 .music.expanded {
-    height: 100%;
+    height: 100%; 
 }
 
 .now-playing {
@@ -175,7 +163,6 @@ button {
     flex-grow: 1;
     height: 100%;
     padding-right: 28px;
-
 }
 
 
@@ -188,7 +175,12 @@ button {
     letter-spacing: -.025em;
     font-weight: 600;
     justify-content: start;
-    color: var(--media_text_color);
+
+    --dark_tint-text: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    --light_tint-text: color-mix(in srgb, var(--media_bg_color), #000000 80%);
+    color: color-mix(in srgb,
+            var(--dark_tint-text) var(--dark_mix_weight),
+            var(--light_tint-text) var(--light_mix_weight));
 }
 
 .track-title.expanded {
@@ -199,12 +191,18 @@ button {
     display: flex;
     max-width: 30ch;
     margin-top: 8px;
-    color: var(--media_text_color);
     font-family: 'DM Mono', monospace;
     font-size: 14px;
     letter-spacing: .04em;
     text-transform: uppercase;
     justify-content: start;
+
+    --dark_tint-text: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    --light_tint-text: color-mix(in srgb, var(--media_bg_color), #000000 80%);
+    color: color-mix(in srgb,
+            var(--dark_tint-text) var(--dark_mix_weight),
+            var(--light_tint-text) var(--light_mix_weight));
+
 }
 
 .track-artist.expanded {
@@ -225,7 +223,6 @@ small {
     letter-spacing: .08em;
     font-size: 13px;
 }
-
 
 h1 {
     margin: 8vh 0 0;
@@ -258,33 +255,47 @@ h1 em {
     background: var(--highlight_color);
 }
 
-
-
 .now-playing strong,
 .now-playing span {
     display: block;
 }
 
 
-
-
-
 .transport button {
     width: auto;
     flex-grow: 1;
     height: 38px;
-    border: 1px solid var(--media_text_color);
     background: transparent;
     color: #161817;
     font-weight: 600;
+
+    --dark_tint-text: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    --light_tint-text: color-mix(in srgb, var(--media_bg_color), #000000 80%);
+    color: color-mix(in srgb,
+            var(--dark_tint-text) var(--dark_mix_weight),
+            var(--light_tint-text) var(--light_mix_weight));
+
+    border: 1px solid color-mix(in srgb,
+            var(--dark_tint-text) var(--dark_mix_weight),
+            var(--light_tint-text) var(--light_mix_weight));
 }
 
 .transport .transport-main {
     background: #161817;
-    color: var(--media_bg_color);
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 20%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 20%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+
+    --dark_tint-text: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    --light_tint-text: color-mix(in srgb, var(--media_bg_color), #000000 80%);
+    border-color: color-mix(in srgb,
+            var(--dark_tint-text) var(--dark_mix_weight),
+            var(--light_tint-text) var(--light_mix_weight));
+
 }
-
-
 
 /* ==========================================================================
    MIXER SECTION
@@ -395,48 +406,4 @@ input[type='range'] {
     color: #8e9790;
     font-family: 'DM Mono', monospace;
     font-size: 14px;
-}
-
-@media (max-width: 700px) {
-    .app-shell {
-        grid-template-columns: 1fr;
-        grid-template-rows: 52% 48%;
-        overflow: auto;
-    }
-
-    .hero-panel {
-        min-height: 0;
-        padding: 24px;
-    }
-
-    .artwork {
-
-        margin-bottom: 18px;
-    }
-
-    .hero-panel h1 {
-        margin-top: 28px;
-        font-size: 58px;
-    }
-
-    .mixer-panel {
-        padding: 10px;
-    }
-
-    .mixer-panel header {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .mixer-meta {
-        width: 100%;
-        justify-content: space-between;
-        gap: 12px;
-        text-align: left;
-    }
-
-    .row-top strong {
-        font-size: 20px;
-    }
 }
