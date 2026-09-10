@@ -17,16 +17,15 @@ import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
 import { FastAverageColor } from 'fast-average-color';
 import { daemonUrl } from './daemon';
-
 import { scrollHandler, selectionHandler, useDebugHardwareEvents } from './inputHandler';
 
+const isClientDevServer = import.meta.env.DEV;
 
 type AppState = Record<string, { volume: number; muted: boolean }>;
 type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient({ url: daemonUrl() });
-
 
 // Demo app states
 const demoApps: AppState = {
@@ -58,7 +57,7 @@ function requestId(): string {
   });
 }
 
-
+// gets average color from URL using FastAverageColor()
 export async function getAverageColorFromUrl(url: string): Promise<string> {
   if (!url) return '#ffffff';
 
@@ -146,8 +145,7 @@ export default function App() {
     // on mount
     client.config.get({ key: 'tracked_apps' }).then(result => {
       if (result.ok) {
-
-        send({ type: 'apps_settings:update', message: defaultApps });
+        send({ type: 'apps_settings:update', message: result.response.value == "" ? defaultApps : result.response.value });
       }
     });
     client.config.get({ key: 'useArtworkColor' }).then(result => {
@@ -171,7 +169,6 @@ export default function App() {
         set_media_text_color(result.response.value || '#000000');
       }
     });
-
     client.config.get({ key: 'mixer_bg_color' }).then(result => {
       if (result.ok) {
         set_mixer_bg_color(result.response.value || '#202322');
@@ -185,12 +182,6 @@ export default function App() {
     return offConfig;
   }, []);
 
-  // handles album cover pointer event to toggle fullscreen
-  const handleAlbumCoverTap = () => {
-    setfullAlbum((fullAlbum) => !fullAlbum);
-
-  };
-
 
   // helper to keep track of scroll state in a ref for use in event callbacks
   useEffect(() => {
@@ -198,10 +189,19 @@ export default function App() {
   }, [isScrollActive]);
 
 
-
-
   // Subscribes to real-time events (media player, volume updates, connection status) and syncs them to React state
   useEffect(() => {
+
+    // sets connection status and triggers volume refresh with server if newly connected
+    const updateForwardAvailability = (available: boolean) => {
+      setConnected(available);
+      if (available) client.forward.json({ type: "volume:refresh" }).catch(() => undefined);
+    };
+
+    // sees change in capabilities such as if server is reachable
+    const onCapabilityUpdate = client.capabilities.onSnapshot((snapshot) => {
+      updateForwardAvailability(snapshot.capabilities.available.forward);
+    });
 
     // detects change in server player state and updates local player state
     const onPlayerUpdate = client.player.onSnapshot((reply) => setPlayer(reply.state));
@@ -220,24 +220,13 @@ export default function App() {
       // sees incoming updates on mixer errors
       if (isMixerError(message)) setMixerError(message.message);
     });
-
-    // sets connection status and triggers volume refresh with server if newly connected
-    const updateForwardAvailability = (available: boolean) => {
-      setConnected(available);
-      if (available) client.forward.json({ type: "volume:refresh" }).catch(() => undefined);
-    };
-
-    // sees change in capabilities such as if server is reachable
-    const onCapabilityUpdate = client.capabilities.onSnapshot((snapshot) => {
-      updateForwardAvailability(snapshot.capabilities.available.forward);
-    });
-
-
+  
     // initial player state fetch then updates local state
     client.player.stateGet().then((result) => result.ok && setPlayer(result.response.state));
     // initial capabilities state fetch then updates local state
     client.capabilities.get().then((result) => {
       updateForwardAvailability(result.ok && result.response.capabilities.available.forward);
+
     });
 
     return () => {
@@ -247,11 +236,9 @@ export default function App() {
     };
   }, []);
 
-
   // turns artwork into a workable URL for rendering, also sets artwork average color state
   useEffect(() => {
     const artworkId = player?.track?.artworkId;
-    setArtworkUrl(null);
     if (!artworkId) return;
     let cancelled = false;
     client.asset.get({ id: artworkId, requestId: requestId() }).then(result => {
@@ -279,7 +266,6 @@ export default function App() {
   useEffect(() => {
     // Set up the interval
     const interval = setInterval(() => {
-
       client.player.stateGet().then(result => result.ok
         && result?.response?.state?.track?.durationMs
         && setPlayerDurPerc((result.response.state.playback.positionMs / result.response.state.track?.durationMs) * 100));
@@ -287,39 +273,30 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-
-
-
   function renderAlbum() {
-
-
     return (
       <motion.section
         layout
-
         transition={{ type: 'tween', ease: [0.25, 1, 0.5, 1], duration: 0.4 }}
-
         className={`hero-panel ${fullAlbum ? "expanded" : ""}`}
       >
-
         <motion.div
           layout
           className={`artwork ${fullAlbum ? "expanded" : ""}`}
-          onClick={handleAlbumCoverTap}
+          onClick={() =>(setfullAlbum((fullAlbum) => !fullAlbum))}
           style={artworkUrl ? { backgroundImage: `url(${artworkUrl})` } : undefined}
         >
           {!artworkUrl && <span>NO ARTWORK</span>}
         </motion.div>
 
         <motion.div layout className={`now-playing ${fullAlbum ? 'expanded' : ''}`}>
-
           <motion.div className="song-duration">
             <motion.div className="progress-bar">
               <motion.div className="progress" animate={{ width: `${playerDurPerc}%` }}></motion.div>
             </motion.div>
           </motion.div>
-
           <motion.div layout className={`transport ${fullAlbum ? 'expanded' : ''}`}>
+
             <motion.button
               layout
               onClick={() => client.player.skipPrev({ allowSeeking: true }).catch(() => undefined)}
@@ -327,6 +304,7 @@ export default function App() {
             >
               <motion.span layout>|&lt;</motion.span>
             </motion.button>
+
             <motion.button
               layout
               className="transport-main"
@@ -343,15 +321,13 @@ export default function App() {
             >
               <motion.span layout>&gt;|</motion.span>
             </motion.button>
-          </motion.div>
 
+          </motion.div>
           <motion.div layout className={`music ${fullAlbum ? 'expanded' : ''}`}>
             <motion.strong layout className={`track-title ${fullAlbum ? 'expanded' : ''}`}>{title}</motion.strong>
             <motion.span layout className={`track-artist ${fullAlbum ? 'expanded' : ''}`}>{artist}</motion.span>
           </motion.div>
-
         </motion.div>
-
       </motion.section>
     )
   }
@@ -361,6 +337,7 @@ export default function App() {
     return (<section className="mixer-panel">
       <header><span>{selectedApp ?? 'None'}</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'Mixer Working' : 'Mixer Unavailable'}</small></div></header>
       <div className="mixer-list">
+        {/* Loops through displayApps */}
         {Object.entries(displayedApps).map(([appName, state]) => {
           const unavailable = state.volume < 0;
           return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
@@ -376,18 +353,16 @@ export default function App() {
                 disabled={showingDemoApps || unavailable}
                 onChange={(event) => {
                   const volume = Number(event.target.value);
-
                   setApps((previous) => ({
                     ...previous,
                     [appName]: { ...previous[appName], volume },
                   }));
-
-                  if (!isScrollActive) {
-                    send({ type: "volume:set", appName, volume });
-                  }
+                  // possibly not needed
+                  // if (!isScrollActive) {
+                  //   send({ type: "volume:set", appName, volume });
+                  // }
                 }}
               />
-
             </div>
           </article>;
         })}
@@ -395,19 +370,13 @@ export default function App() {
         {showingDemoApps && !mixerError && <div className="empty">Demo application data</div>}
       </div>
     </section>)
-
   }
 
-
-
-
-  useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
+  isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
   scrollHandler(selectedApp, showingDemoApps, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
   selectionHandler(client, apps, demoApps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
   return (
-
     <main
-
       className="app-shell"
       style={{
         '--highlight_color': highlight_color,

@@ -172,7 +172,7 @@ defineExtension({
       // Pass the tracked apps along inside the native request payload
       mixerClient.request({
         type: 'volume:refresh',
-        // @ts-ignore
+        // @ts-ignore // secondary json arg read in worker
         watchedAppsConfig: trackedApps
       }).then(next => {
         if (Date.now() - lastSetTime < 3000) return;
