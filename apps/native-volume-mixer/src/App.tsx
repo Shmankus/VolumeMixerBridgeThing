@@ -26,9 +26,6 @@ type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient({ url: daemonUrl() });
-
-
-
 const defaultApps = "Firefox|{firefox,mozilla firefox},Apple Music|{amplibraryagent},Discord|{discord}";
 
 
@@ -51,19 +48,25 @@ function requestId(): string {
   });
 }
 
-// gets average color from URL using FastAverageColor()
-export async function getAverageColorFromUrl(url: string): Promise<string> {
-  if (!url) return '#ffffff';
+// helper function that determines if color is dark based on YIQ Luma formula
+function isDarkColor(hex: string): boolean {
+  const cleanHex = hex.replace('#', '');
+  const fullHex = cleanHex.length === 3
+    ? cleanHex.split('').map(char => char + char).join('')
+    : cleanHex;
 
-  try {
-    const fac = new FastAverageColor();
-    const color = await fac.getColorAsync(url, { algorithm: 'sqrt' });
-    return color.hex;
-  } catch (error) {
-    console.error("Error extracting color:", error);
-    return '#ffffff'; // Fallback color on error
-  }
+  // hex string -> base-16 number and extract R, G, B
+  const num = parseInt(fullHex, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+
+  // YIQ Luma formula (human-eye perception algorithm)
+  // Threshold is 128 out of 255
+  const brightness = (r * 0.299) + (g * 0.587) + (b * 0.114);
+  return brightness < 128;
 }
+
 
 
 export default function App() {
@@ -72,6 +75,7 @@ export default function App() {
   const [artworkBg, setArtworkBg] = useState<string>("#080000");
   const [highlight_color, set_highlight_color] = useState('#ff5269');
   const [media_bg_color, set_media_bg_color] = useState('#ff5269');
+  const [is_bg_dark, set_is_bg_dark] = useState<Boolean>(false);
   const [media_text_color, set_media_text_color] = useState('#000000');
   const [mixer_bg_color, set_mixer_bg_color] = useState('#202322');
   const [mixer_text_color, set_mixer_text_color] = useState('#f4f1e8');
@@ -184,32 +188,25 @@ export default function App() {
 
   // Subscribes to real-time events (media player, volume updates, connection status) and syncs them to React state
   useEffect(() => {
-
     // sets connection status and triggers volume refresh with server if newly connected
     const updateForwardAvailability = (available: boolean) => {
       setConnected(available);
       if (available) client.forward.json({ type: "volume:refresh" }).catch(() => undefined);
     };
-
     // sees change in capabilities such as if server is reachable
     const onCapabilityUpdate = client.capabilities.onSnapshot((snapshot) => {
       updateForwardAvailability(snapshot.capabilities.available.forward);
     });
-
     // detects change in server player state and updates local player state
     const onPlayerUpdate = client.player.onSnapshot((reply) => setPlayer(reply.state));
-
     // detects incoming statuses such as volume and app changes
     const onServerUpdate = client.forward.onJson((message) => {
-
       // sees incoming updates on volume states
       if (isVolumeState(message)) {
         if (isScrollActiveRef.current) return; // Block incoming volume updates mid-scroll
-
         // main extension -> message -> global app state
         setApps(message.apps);
       }
-
       // sees incoming updates on mixer errors
       if (isMixerError(message)) setMixerError(message.message);
     });
@@ -221,7 +218,6 @@ export default function App() {
       updateForwardAvailability(result.ok && result.response.capabilities.available.forward);
 
     });
-
     return () => {
       onPlayerUpdate();
       onServerUpdate();
@@ -229,33 +225,45 @@ export default function App() {
     };
   }, []);
 
+
+
   // turns artwork into a workable URL for rendering, also sets artwork average color state
   useEffect(() => {
-    const artworkId = player?.track?.artworkId;
-    if (!artworkId) return;
-    let cancelled = false;
-    client.asset.get({ id: artworkId, requestId: requestId() }).then(result => {
-      if (cancelled || !result.ok) return;
-      const bytes = new Uint8Array(result.response.bytes).slice();
-      const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
+    const fetchArtworkInfo = async () => {
+      const artworkId = player?.track?.artworkId;
+      if (!artworkId) return;
+      let cancelled = false;
+      client.asset.get({ id: artworkId, requestId: requestId() }).then(async result => {
+        if (cancelled || !result.ok) return;
+        const bytes = new Uint8Array(result.response.bytes).slice();
+        const url = URL.createObjectURL(new Blob([bytes.buffer], { type: result.response.mime ?? 'image/jpeg' }));
 
-      getAverageColorFromUrl(url)
-        .then((hexColor) => {
-          setArtworkBg(hexColor)
-          URL.revokeObjectURL(url);
-        })
-        .catch((err) => {
-          console.error(err);
-          URL.revokeObjectURL(url);
-        });
-      setArtworkUrl(url);
+        if (url != artworkUrl) setArtworkUrl(url); // avoid reassign flicker
 
-    });
-    return () => { cancelled = true; };
-  }, [player?.track?.artworkId]);
+        if (!url) return artworkBg;
+        if (useAlbumColor) {
+          const fac = new FastAverageColor();
+          await fac.getColorAsync(url, { algorithm: 'sqrt' })
+            .then((color) => {
+              setArtworkBg(color.hex)
+              set_is_bg_dark(color.isDark);
+              URL.revokeObjectURL(url);
+            })
+            .catch((err) => {
+              console.error(err);
+              URL.revokeObjectURL(url);
+            });
+        } else {
+          set_is_bg_dark(isDarkColor(media_bg_color));
+        }
+      });
+      return () => { cancelled = true; };
+    }
+    fetchArtworkInfo();
+  }, [player?.track?.artworkId, useAlbumColor]);
 
 
-  // interval that gathers player duration information
+  // interval that gathers player duration information 
   useEffect(() => {
     // Set up the interval
     const interval = setInterval(() => {
@@ -292,7 +300,7 @@ export default function App() {
 
             <motion.button
               layout
-              onClick={() => client.player.skipPrev({ allowSeeking: true }).catch(() => undefined)}
+              onClick={() => client.player.skipPrev({ allowSeeking: false }).catch(() => undefined)}
               title="Previous track"
             >
               <motion.span layout>|&lt;</motion.span>
@@ -386,7 +394,11 @@ export default function App() {
         '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
         '--media_text_color': media_text_color,
         '--mixer_bg_color': mixer_bg_color,
-        '--mixer_text_color': mixer_text_color
+        '--mixer_text_color': mixer_text_color,
+
+        // weights for determining if a background is light or dark
+        '--dark_mix_weight': is_bg_dark ? '100%' : '0%',
+        '--light_mix_weight': is_bg_dark ? '0%' : '100%'
       } as React.CSSProperties}>
 
       {renderAlbum && renderAlbum()}
