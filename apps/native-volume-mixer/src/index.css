@@ -181,6 +181,7 @@ button {
     color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: color 1s ease;
 }
 
 .track-title.expanded {
@@ -202,6 +203,7 @@ button {
     color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: color 1s ease;
 
 }
 
@@ -278,6 +280,8 @@ h1 em {
     border: 1px solid color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+
+    transition: color 1s ease, border 1s ease;
 }
 
 .transport .transport-main {
@@ -294,6 +298,7 @@ h1 em {
     border-color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: background-color 1s ease, border-color 1s ease;
 
 }
 
