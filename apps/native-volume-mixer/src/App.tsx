@@ -198,6 +198,8 @@ export default function App() {
   }, [isScrollActive]);
 
 
+
+
   // Subscribes to real-time events (media player, volume updates, connection status) and syncs them to React state
   useEffect(() => {
 
@@ -230,12 +232,14 @@ export default function App() {
       updateForwardAvailability(snapshot.capabilities.available.forward);
     });
 
+
     // initial player state fetch then updates local state
     client.player.stateGet().then((result) => result.ok && setPlayer(result.response.state));
     // initial capabilities state fetch then updates local state
     client.capabilities.get().then((result) => {
       updateForwardAvailability(result.ok && result.response.capabilities.available.forward);
     });
+
     return () => {
       onPlayerUpdate();
       onServerUpdate();
