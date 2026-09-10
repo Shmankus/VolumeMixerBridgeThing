@@ -3,16 +3,10 @@ const readline = require('node:readline');
 const mixerModule = require('./win-sound-mixer.node');
 const mixer = mixerModule.SoundMixer ?? mixerModule.default ?? mixerModule;
 
+// global state for the worker: the list of apps to watch for volume changes.
+let watchedApps = [];
 
-/*===========================================*
-*  THIS CHANGES WHAT APPS ARE RECOGNIZED FOR MIXER
-*============================================*/
 
-const watchedApps = [
-  { id: 'Discord', names: ['discord'] },
-  { id: 'Firefox', names: ['firefox', 'mozilla firefox'] },
-  { id: 'AMPLibraryAgent', names: ['amplibraryagent'] },
-];
 
 function cleanName(value) {
   return value.split(/[\\/]/).at(-1)?.replace(/\.exe$/i, '').toLowerCase() ?? '';
@@ -52,14 +46,24 @@ function handle(request) {
   return snapshot();
 }
 
-let input = '';
+// Single stdin reader for processing worker request
+let appsinput = '';
 process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => { input += chunk; });
+process.stdin.on('data', chunk => { appsinput += chunk; });
 process.stdin.on('end', () => {
   try {
-    process.stdout.write(JSON.stringify({ apps: handle(JSON.parse(input)) }));
+    const parsedRequest = JSON.parse(appsinput);
+
+    //mixer-helper -> watchedApps (global) -> back to UI
+    if (parsedRequest.watchedAppsConfig) {
+      watchedApps = parsedRequest.watchedAppsConfig;
+    }
+
+    // handles needed info then -> mixer-helper
+    process.stdout.write(JSON.stringify({ apps: handle(parsedRequest) }));
   } catch (error) {
     process.stdout.write(JSON.stringify({ error: String(error) }));
     process.exitCode = 1;
   }
 });
+
