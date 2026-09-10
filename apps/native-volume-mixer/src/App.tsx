@@ -383,10 +383,10 @@ export default function App() {
       </section>)
   }
 
-  //  isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
+  isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
   scrollHandler(selectedApp, noAppsTracked, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
   selectionHandler(client, apps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
-  muteHandler(selectedApp, noAppsTracked, setApps,client);
+  muteHandler(selectedApp, noAppsTracked, setApps, client);
   return (
     <main
       className="app-shell"
