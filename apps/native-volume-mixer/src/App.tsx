@@ -27,12 +27,6 @@ type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient({ url: daemonUrl() });
 
-// Demo app states
-const demoApps: AppState = {
-  App1: { volume: 72, muted: false },
-  App2: { volume: 48, muted: false },
-  App3: { volume: 86, muted: false },
-};
 
 
 const defaultApps = "Firefox|{firefox,mozilla firefox},Apple Music|{amplibraryagent},Discord|{discord}";
@@ -89,8 +83,7 @@ export default function App() {
   // Mixer States and children
   const [apps, setApps] = useState<AppState>({}); // sets apps to show on mixer
   const [selectedApp, setSelectedApp] = useState<string>(""); // sets which app is selected for mixer
-  const displayedApps = Object.keys(apps).length > 0 ? apps : demoApps;
-  const showingDemoApps = Object.keys(apps).length === 0;
+  const noAppsTracked = Object.keys(apps).length === 0;
   const send = (message: object) => client.forward.json(message).catch(() => undefined);
 
   //Player states and children
@@ -119,7 +112,7 @@ export default function App() {
           client.forward.json(message).catch(() => undefined);
 
         // tracked apps from settings -> main mixer extension
-        send({ type: 'apps_settings:update', message: change.value  == "" ? defaultApps : change.value });
+        send({ type: 'apps_settings:update', message: change.value == "" ? defaultApps : change.value });
       }
       if (change.key === 'useArtworkColor') {
         setUseAlbumColor(change.value == "true" ? true : false);
@@ -220,7 +213,7 @@ export default function App() {
       // sees incoming updates on mixer errors
       if (isMixerError(message)) setMixerError(message.message);
     });
-  
+
     // initial player state fetch then updates local state
     client.player.stateGet().then((result) => result.ok && setPlayer(result.response.state));
     // initial capabilities state fetch then updates local state
@@ -283,7 +276,7 @@ export default function App() {
         <motion.div
           layout
           className={`artwork ${fullAlbum ? "expanded" : ""}`}
-          onClick={() =>(setfullAlbum((fullAlbum) => !fullAlbum))}
+          onClick={() => (setfullAlbum((fullAlbum) => !fullAlbum))}
           style={artworkUrl ? { backgroundImage: `url(${artworkUrl})` } : undefined}
         >
           {!artworkUrl && <span>NO ARTWORK</span>}
@@ -334,47 +327,57 @@ export default function App() {
 
   // Renders right hand mixer in dual screen mode 
   function renderMixer() {
-    return (<section className="mixer-panel">
-      <header><span>{selectedApp ?? 'None'}</span><div className="mixer-meta"><small className="extension-status"><span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'Mixer Working' : 'Mixer Unavailable'}</small></div></header>
-      <div className="mixer-list">
-        {/* Loops through displayApps */}
-        {Object.entries(displayedApps).map(([appName, state]) => {
-          const unavailable = state.volume < 0;
-          return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
-            <div className="row-top"><strong>{appName}</strong><span>{unavailable ? '--' : `${state.volume}%`}</span></div>
-            <div className="row-bottom">
-              <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !showingDemoApps && !unavailable && send({ type: 'volume:toggleMute', appName })} disabled={showingDemoApps || unavailable} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
-              <input
-                id={`volume-${appName}`}
-                type="range"
-                min="0"
-                max="100"
-                value={unavailable ? 0 : state.volume}
-                disabled={showingDemoApps || unavailable}
-                onChange={(event) => {
-                  const volume = Number(event.target.value);
-                  setApps((previous) => ({
-                    ...previous,
-                    [appName]: { ...previous[appName], volume },
-                  }));
-                  // possibly not needed
-                  // if (!isScrollActive) {
-                  //   send({ type: "volume:set", appName, volume });
-                  // }
-                }}
-              />
-            </div>
-          </article>;
-        })}
+    return (
+      <section className="mixer-panel">
+
+        <header>
+          <span>{!noAppsTracked ? selectedApp ?? 'None' : "No Apps Tracked | Check settings"}</span>
+          <div className="mixer-meta">
+            <small className="extension-status">
+              <span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'Mixer Working' : 'Mixer Down'}
+            </small>
+          </div>
+        </header>
+
+
+        {!noAppsTracked && !mixerError && (
+
+          <div className="mixer-list">
+            {/* Loops through displayApps */}
+            {Object.entries(apps).map(([appName, state]) => {
+              const isUnreachableApp = state.volume < 0;
+              return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
+                <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
+                <div className="row-bottom">
+                  <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !noAppsTracked && !isUnreachableApp && send({ type: 'volume:toggleMute', appName })} disabled={noAppsTracked || isUnreachableApp} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
+                  <input
+                    id={`volume-${appName}`}
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={isUnreachableApp ? 0 : state.volume}
+                    disabled={noAppsTracked || isUnreachableApp}
+                    onChange={(event) => {
+                      const volume = Number(event.target.value);
+                      setApps((previous) => ({
+                        ...previous,
+                        [appName]: { ...previous[appName], volume },
+                      }));
+                    }}
+                  />
+                </div>
+              </article>;
+            })}
+          </div>
+        )}
+
         {mixerError && <div className="empty">{mixerError}</div>}
-        {showingDemoApps && !mixerError && <div className="empty">Demo application data</div>}
-      </div>
-    </section>)
+      </section>)
   }
 
   isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
-  scrollHandler(selectedApp, showingDemoApps, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
-  selectionHandler(client, apps, demoApps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
+  scrollHandler(selectedApp, noAppsTracked, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
+  selectionHandler(client, apps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
   return (
     <main
       className="app-shell"

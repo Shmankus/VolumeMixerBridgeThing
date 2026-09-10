@@ -8,7 +8,7 @@
       "type": "string",
       "data": {
         "key": "tracked_apps",
-        "label": "Tracked Apps (Firefox|{firefox,mozilla firefox},Spotify|{spotify,etc...})"
+        "label": "Tracked Apps 'Firefox|{firefox,mozilla firefox},etc' (empty = default)"
       }
     },
     {
