@@ -1,7 +1,7 @@
 {
   "$schema": "https://apps.bridgething.com/schemas/catalog/v1.json",
   "schema": "catalog.v1",
-  "updated_at": "2026-09-07T15:25:22.219Z",
+  "updated_at": "2026-09-10T02:30:32.422Z",
   "repo": {
     "name": "Volume Mixer",
     "description": "Windows app volume mixer with BridgeThing media controls.",
@@ -37,7 +37,7 @@
             ]
           },
           "min_libbridgething_version": "0.12.1",
-          "changelog": "First release."
+          "changelog": null
         }
       ]
     }
