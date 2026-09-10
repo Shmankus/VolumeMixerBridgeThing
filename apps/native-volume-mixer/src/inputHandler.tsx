@@ -13,36 +13,29 @@ import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { sendServerLog } from "./serverSenders";
 type AppState = Record<string, { volume: number; muted: boolean }>;
 
-export function scrollHandler(selectedApp: string | null, showingDemoApps: boolean, setApps: React.Dispatch<React.SetStateAction<AppState>>, client: BridgethingClient, setIsScrollActive: React.Dispatch<React.SetStateAction<boolean>>) {
-
-
+export function scrollHandler(selectedApp: string | null,
+    showingDemoApps: boolean, setApps: React.Dispatch<React.SetStateAction<AppState>>,
+    client: BridgethingClient,
+    setIsScrollActive: React.Dispatch<React.SetStateAction<boolean>>) {
     const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Scroll wheel listener for volume control, with a 300ms debounce to send final volume to server after scrolling stops
     useEffect(() => {
         const handleWheel = (event: WheelEvent) => {
             event.preventDefault();
-
             if (!selectedApp || showingDemoApps) return;
-
             const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
             if (Math.abs(delta) < 1) return;
-
             const step = delta > 0 ? 5 : -5;
-
             // Mark scroll active
             setIsScrollActive(true);
-
             let targetVolume = 0;
-
             // Updates the volume state immediately for UI feedback, but does not send to server yet
             setApps((previous) => {
                 const currentApp = previous[selectedApp];
                 if (!currentApp) return previous;
-
                 const currentVol = currentApp.volume ?? 0;
                 targetVolume = Math.min(Math.max(currentVol + step, 0), 100);
-
                 return {
                     ...previous,
                     [selectedApp]: { ...currentApp, volume: targetVolume },
@@ -52,28 +45,23 @@ export function scrollHandler(selectedApp: string | null, showingDemoApps: boole
             if (volumeTimeoutRef.current) {
                 clearTimeout(volumeTimeoutRef.current);
             }
-
             // Set a new timeout to send the final volume after 300ms of no scrolling
             volumeTimeoutRef.current = setTimeout(() => {
                 console.log("Scrolling finished. Sending final volume:", targetVolume);
-
                 // Dispatch final volume to server
                 client.forward.json({
                     type: "volume:set",
                     appName: selectedApp,
                     volume: targetVolume,
                 });
-
                 // Mark scroll as inactive
                 setIsScrollActive(false);
                 volumeTimeoutRef.current = null;
             }, 300);
         };
 
-
         const options: AddEventListenerOptions = { passive: false };
         window.addEventListener("wheel", handleWheel, options);
-
         return () => {
             window.removeEventListener("wheel", handleWheel);
             if (volumeTimeoutRef.current) {
@@ -83,35 +71,67 @@ export function scrollHandler(selectedApp: string | null, showingDemoApps: boole
     }, [selectedApp, showingDemoApps]);
 }
 
-
 export function selectionHandler(
-  client: BridgethingClient,
-  apps: Record<string, { volume?: number }>,
- 
-  setSelectedApp: Dispatch<SetStateAction<string>>
+    client: BridgethingClient,
+    apps: Record<string, { volume?: number }>,
+    setSelectedApp: Dispatch<SetStateAction<string>>
 ) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      const key = Number(event.key);
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.repeat) return;
+            const key = Number(event.key);
+            if (!Number.isInteger(key) || key < 1) return;
+            const source = apps  // gets the source of apps to select from, either the real apps or demo apps if no real apps are present
+            const appNames = Object.keys(source); // gets the names of the apps in the source
+            const appName = appNames[key - 1];
+            if (!appName) return;
+            setSelectedApp(prev => prev === appName ? "" : appName); // toggle selection of the app if it's already selected, otherwise select it
+            sendServerLog(client, `[KEY SELECTION] Selected app: ${appName}`);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [apps, client, setSelectedApp]);
+}
 
-      if (!Number.isInteger(key) || key < 1) return;
+export function muteHandler(selectedApp: string | null,
+    noAppsTracked: boolean,
+    setApps: React.Dispatch<React.SetStateAction<AppState>>,
+    client: BridgethingClient,
+) {
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.repeat) return;
+            if (!selectedApp || noAppsTracked) return;
+            if (event.key == "Enter") {
+                let currentApp = "";
 
-      const source = apps  // gets the source of apps to select from, either the real apps or demo apps if no real apps are present
-      const appNames = Object.keys(source); // gets the names of the apps in the source
-      const appName = appNames[key - 1];
+                client.forward.json({
+                    type: "volume:toggleMute",
+                    appName: selectedApp,
+                });
 
-      if (!appName) return;
+                setApps((previous) => {
+                    const currentApp = previous[selectedApp];
+                    if (!currentApp) return previous;
+                    return {
+                        ...previous,
+                        [selectedApp]: { ...currentApp, muted: !currentApp.muted },
+                    };
+                });
 
-      setSelectedApp(prev => prev === appName ? "" : appName); // toggle selection of the app if it's already selected, otherwise select it
-      sendServerLog(client, `[KEY SELECTION] Selected app: ${appName}`);
-    };
+                sendServerLog(client, "Muted " + currentApp);
+            }
 
-    window.addEventListener("keydown", handleKeyDown);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [selectedApp, noAppsTracked]);
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [apps,  client, setSelectedApp]);
+
 }
 
 export function useDebugHardwareEvents(client: BridgethingClient) {

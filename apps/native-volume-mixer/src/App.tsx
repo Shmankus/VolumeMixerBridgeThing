@@ -17,7 +17,7 @@ import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
 import { FastAverageColor } from 'fast-average-color';
 import { daemonUrl } from './daemon';
-import { scrollHandler, selectionHandler, useDebugHardwareEvents } from './inputHandler';
+import { scrollHandler, selectionHandler, muteHandler, useDebugHardwareEvents } from './inputHandler';
 
 const isClientDevServer = import.meta.env.DEV;
 
@@ -260,7 +260,7 @@ export default function App() {
       return () => { cancelled = true; };
     }
     fetchArtworkInfo();
-  }, [player?.track?.artworkId, useAlbumColor]);
+  }, [player?.track?.artworkId, useAlbumColor, media_bg_color]);
 
 
   // interval that gathers player duration information 
@@ -386,6 +386,7 @@ export default function App() {
   isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
   scrollHandler(selectedApp, noAppsTracked, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
   selectionHandler(client, apps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
+  muteHandler(selectedApp, noAppsTracked, setApps, client);
   return (
     <main
       className="app-shell"
