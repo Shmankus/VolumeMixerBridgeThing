@@ -347,9 +347,7 @@ export default function App() {
           </div>
         </header>
 
-
         {!noAppsTracked && !mixerError && (
-
           <div className="mixer-list">
             {/* Loops through displayApps */}
             {Object.entries(apps).map(([appName, state]) => {
@@ -357,7 +355,19 @@ export default function App() {
               return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
                 <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
                 <div className="row-bottom">
-                  <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !noAppsTracked && !isUnreachableApp && send({ type: 'volume:toggleMute', appName })} disabled={noAppsTracked || isUnreachableApp} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
+                  
+                  <button
+                    className={state.muted ? 'mute active' : 'mute'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      !noAppsTracked && !isUnreachableApp && send({ type: 'volume:toggleMute', appName });
+                    }}
+                    disabled={noAppsTracked || isUnreachableApp}
+                    title="Toggle mute"
+                  >
+                    {state.muted ? 'MUTED' : 'MUTE'}
+                  </button>
+
                   <input
                     id={`volume-${appName}`}
                     type="range"
