@@ -409,7 +409,9 @@ export default function App() {
 
         // weights for determining if a background is light or dark
         '--dark_mix_weight': is_bg_dark ? '100%' : '0%',
-        '--light_mix_weight': is_bg_dark ? '0%' : '100%'
+        '--light_mix_weight': is_bg_dark ? '0%' : '100%',
+
+        '--app_padding' :  Object.keys(apps).length <= 3 ? '33px':'15px'
       } as React.CSSProperties}>
 
       {renderAlbum && renderAlbum()}
@@ -418,3 +420,4 @@ export default function App() {
     </main>
   );
 }
+ 

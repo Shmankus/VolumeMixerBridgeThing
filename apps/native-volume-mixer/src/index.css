@@ -312,7 +312,8 @@ h1 em {
 
 .mixer-panel {
     min-width: 0;
-    padding: clamp(15px, 5vw, 20px);
+    padding-top: 15px;
+    padding-left: 0;
     width: 100%;
     flex-basis: 65%;
     background: var(--mixer_bg_color);
@@ -325,6 +326,8 @@ h1 em {
     color: var(--highlight_color);
     border-bottom: 1px solid #454946;
     padding-bottom: 16px;
+    padding-right: 16px;
+    padding-left: 16px;
 
 }
 
@@ -352,13 +355,15 @@ h1 em {
 }
 
 .mixer-list {
-    margin-top: 18px;
+    
 }
 
 .mixer-row {
-    padding: 24px 0;
+    padding: var(--app_padding);
     border-bottom: 1px solid #454946;
     padding-right: 45px;
+    padding-left: 28px;
+    
 }
 
 .row-top,
@@ -367,6 +372,7 @@ h1 em {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
+    
 }
 
 .row-top strong {
