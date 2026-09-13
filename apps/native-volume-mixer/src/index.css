@@ -317,6 +317,15 @@ h1 em {
     width: 100%;
     flex-basis: 65%;
     background: var(--mixer_bg_color);
+
+
+
+    background: color-mix(in srgb, var(--media_bg_color), #000000 80%);
+
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+
+
+    transition: color 1s ease, border 1s ease;
 }
 
 .mixer-panel header {
@@ -354,16 +363,14 @@ h1 em {
     color: var(--highlight_color);
 }
 
-.mixer-list {
-    
-}
+.mixer-list {}
 
 .mixer-row {
     padding: var(--app_padding);
     border-bottom: 1px solid #454946;
     padding-right: 45px;
     padding-left: 28px;
-    
+
 }
 
 .row-top,
@@ -372,7 +379,7 @@ h1 em {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
-    
+
 }
 
 .row-top strong {
@@ -406,7 +413,12 @@ h1 em {
 
 input[type='range'] {
     flex: 1;
-    accent-color: var(--highlight_color);
+
+
+
+    accent-color: var(--media_bg_color);
+
+
     min-width: 80px;
 }
 
