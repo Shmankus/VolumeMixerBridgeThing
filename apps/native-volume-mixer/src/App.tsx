@@ -75,8 +75,8 @@ export default function App() {
   const [artworkBg, setArtworkBg] = useState<string>("#080000");
   const [media_bg_color, set_media_bg_color] = useState('#ff5269');
   const [is_bg_dark, set_is_bg_dark] = useState<Boolean>(false);
- 
- 
+
+
   // UI helpers
   const [useAlbumColor, setUseAlbumColor] = useState(false); // decides if album cover determines background color
   const [fullAlbum, setfullAlbum] = useState(false); // decides if media player is full screen or not
@@ -118,11 +118,11 @@ export default function App() {
       if (change.key === 'useArtworkColor') {
         setUseAlbumColor(change.value == "true" ? true : false);
       }
-     
+
       if (change.key === 'media_bg_color') {
         set_media_bg_color(change.value || '#ff5269');
       }
-      
+
     });
 
     // on mount
@@ -136,13 +136,13 @@ export default function App() {
         setUseAlbumColor(result.response.value == 'true' ? true : false);
       }
     });
-   
+
     client.config.get({ key: 'media_bg_color' }).then(result => {
       if (result.ok) {
         set_media_bg_color(result.response.value || '#ff5269');
       }
     });
-    
+
     return offConfig;
   }, []);
 
@@ -319,10 +319,10 @@ export default function App() {
             {/* Loops through displayApps */}
             {Object.entries(apps).map(([appName, state]) => {
               const isUnreachableApp = state.volume < 0;
-              return <article className={`mixer-row ${selectedApp == appName ? "selected" : ""}`} key={appName}    onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
+              return <article className={`mixer-row ${selectedApp == appName ? "selected" : ""}`} key={appName} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
                 <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
                 <div className="row-bottom">
-                  
+
                   <button
                     className={state.muted ? 'mute active' : 'mute'}
                     onClick={(e) => {
@@ -348,6 +348,7 @@ export default function App() {
                         ...previous,
                         [appName]: { ...previous[appName], volume },
                       }));
+                      send({ type: 'volume:set', appName, volume });
                     }}
                   />
                 </div>
@@ -375,7 +376,7 @@ export default function App() {
         '--dark_mix_weight': is_bg_dark ? '100%' : '0%',
         '--light_mix_weight': is_bg_dark ? '0%' : '100%',
 
-        '--app_padding' :  Object.keys(apps).length <= 3 ? '33px':'15px'
+        '--app_padding': Object.keys(apps).length <= 3 ? '33px' : '15px'
       } as React.CSSProperties}>
 
       {renderAlbum && renderAlbum()}
@@ -384,4 +385,3 @@ export default function App() {
     </main>
   );
 }
- 
