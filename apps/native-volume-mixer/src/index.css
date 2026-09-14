@@ -316,7 +316,7 @@ h1 em {
     padding-left: 0;
     width: 100%;
     flex-basis: 65%;
-  
+
 
 
 
@@ -347,7 +347,7 @@ h1 em {
     align-items: center;
     gap: 22px;
     text-align: right;
-    
+
 
 }
 
@@ -378,12 +378,12 @@ h1 em {
     padding-left: 28px;
 
     transition: border 1s ease;
-    
+
 
 }
 
 .mixer-row.selected {
-   
+
     --mixer_bg: color-mix(in srgb, var(--media_bg_color), #000000 70%);
 
     --dark_tint: color-mix(in srgb, var(--mixer_bg), #ffffff 20%);
@@ -395,8 +395,8 @@ h1 em {
 
 
     transition: background 1s ease;
-   
-    
+
+
 
 }
 
@@ -444,28 +444,63 @@ h1 em {
     transition: color 1s ease;
 }
 
-input[type='range'] {
-    flex: 1;
 
 
-
-    accent-color: var(--media_bg_color);
-
-
-    min-width: 80px;
-
-    transition: accent-color 1s ease;
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
 }
 
-.availability {
-    color: #8e9790;
-    min-width: 70px;
-    text-align: right;
+input[type=range]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 1.5rem;
+    border-radius: 0.75rem;
+
+
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+
+    transition: background 1s ease;
+
+
+
+
 }
 
-.empty {
-    padding: 40px 0;
-    color: #8e9790;
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: .75rem;
+
+
+
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 0%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 0%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+
+    transition: background 1s ease;
+    cursor: pointer;
+    margin-top: 0;
+}
+
+
+.visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    /* IE6, IE7 */
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+    /* added line */
 }
