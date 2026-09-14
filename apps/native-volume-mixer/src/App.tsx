@@ -73,13 +73,10 @@ export default function App() {
 
   // UI Color
   const [artworkBg, setArtworkBg] = useState<string>("#080000");
-  const [highlight_color, set_highlight_color] = useState('#ff5269');
   const [media_bg_color, set_media_bg_color] = useState('#ff5269');
   const [is_bg_dark, set_is_bg_dark] = useState<Boolean>(false);
-  const [media_text_color, set_media_text_color] = useState('#000000');
-  const [mixer_bg_color, set_mixer_bg_color] = useState('#202322');
-  const [mixer_text_color, set_mixer_text_color] = useState('#f4f1e8');
-
+ 
+ 
   // UI helpers
   const [useAlbumColor, setUseAlbumColor] = useState(false); // decides if album cover determines background color
   const [fullAlbum, setfullAlbum] = useState(false); // decides if media player is full screen or not
