@@ -316,7 +316,7 @@ h1 em {
     padding-left: 0;
     width: 100%;
     flex-basis: 65%;
-    background: var(--mixer_bg_color);
+  
 
 
 
@@ -378,6 +378,24 @@ h1 em {
     padding-left: 28px;
 
     transition: border 1s ease;
+    
+
+}
+
+.mixer-row.selected {
+   
+    --mixer_bg: color-mix(in srgb, var(--media_bg_color), #000000 70%);
+
+    --dark_tint: color-mix(in srgb, var(--mixer_bg), #ffffff 20%);
+    --light_tint: color-mix(in srgb, var(--mixer_bg), #000000 30%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+
+
+    transition: background 1s ease;
+   
     
 
 }

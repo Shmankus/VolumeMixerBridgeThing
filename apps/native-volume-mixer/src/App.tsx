@@ -322,7 +322,7 @@ export default function App() {
             {/* Loops through displayApps */}
             {Object.entries(apps).map(([appName, state]) => {
               const isUnreachableApp = state.volume < 0;
-              return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.16)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
+              return <article className={`mixer-row ${selectedApp == appName ? "selected" : ""}`} key={appName}    onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
                 <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
                 <div className="row-bottom">
                   
