@@ -121,22 +121,11 @@ export default function App() {
       if (change.key === 'useArtworkColor') {
         setUseAlbumColor(change.value == "true" ? true : false);
       }
-      if (change.key === 'highlight_color') {
-        set_highlight_color(change.value || '#ff5269');
-      }
+     
       if (change.key === 'media_bg_color') {
         set_media_bg_color(change.value || '#ff5269');
       }
-      if (change.key === 'media_text_color') {
-        set_media_text_color(change.value || '#000000');
-      }
-
-      if (change.key === 'mixer_bg_color') {
-        set_mixer_bg_color(change.value || '#202322');
-      }
-      if (change.key === 'mixer_text_color') {
-        set_mixer_text_color(change.value || '#f4f1e8');
-      }
+      
     });
 
     // on mount
@@ -150,32 +139,13 @@ export default function App() {
         setUseAlbumColor(result.response.value == 'true' ? true : false);
       }
     });
-    client.config.get({ key: 'highlight_color' }).then(result => {
-      if (result.ok) {
-        set_highlight_color(result.response.value || '#ff5269');
-      }
-    });
-
+   
     client.config.get({ key: 'media_bg_color' }).then(result => {
       if (result.ok) {
         set_media_bg_color(result.response.value || '#ff5269');
       }
     });
-    client.config.get({ key: 'media_text_color' }).then(result => {
-      if (result.ok) {
-        set_media_text_color(result.response.value || '#000000');
-      }
-    });
-    client.config.get({ key: 'mixer_bg_color' }).then(result => {
-      if (result.ok) {
-        set_mixer_bg_color(result.response.value || '#202322');
-      }
-    });
-    client.config.get({ key: 'mixer_text_color' }).then(result => {
-      if (result.ok) {
-        set_mixer_text_color(result.response.value || '#f4f1e8');
-      }
-    });
+    
     return offConfig;
   }, []);
 
@@ -352,7 +322,7 @@ export default function App() {
             {/* Loops through displayApps */}
             {Object.entries(apps).map(([appName, state]) => {
               const isUnreachableApp = state.volume < 0;
-              return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
+              return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.16)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
                 <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
                 <div className="row-bottom">
                   
@@ -401,11 +371,8 @@ export default function App() {
     <main
       className="app-shell"
       style={{
-        '--highlight_color': highlight_color,
+
         '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
-        '--media_text_color': media_text_color,
-        '--mixer_bg_color': mixer_bg_color,
-        '--mixer_text_color': mixer_text_color,
 
         // weights for determining if a background is light or dark
         '--dark_mix_weight': is_bg_dark ? '100%' : '0%',
