@@ -5,8 +5,10 @@
     color: #f4f1e8;
     background: #161817;
     font-synthesis: none;
+}
 
-
+:focus {
+    outline: none;
 }
 
 * {
@@ -28,7 +30,6 @@ body {
 button,
 input {
     font: inherit;
-
 }
 
 button {
@@ -40,7 +41,7 @@ button {
     display: flex;
     width: 100%;
     height: 100%;
-    background: #161817;
+    background: color-mix(in srgb, var(--media_bg_color), #000000 70%);
 
 }
 
@@ -60,19 +61,15 @@ button {
     min-height: 100%;
     width: 100%;
     transition: background-color 1s ease;
-
-
 }
 
 .hero-panel.expanded {
     flex-direction: row;
     width: 100%;
-
 }
 
 .progress-bar {
     height: 15px;
-
     /* Makes progress bar background oppisite brightness of background by 50%*/
     --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
     --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
@@ -121,7 +118,7 @@ button {
     margin: 0px;
     max-width: 60%;
     max-height: max-content;
-    object-fit: cover; 
+    object-fit: cover;
 }
 
 
@@ -148,7 +145,7 @@ button {
 }
 
 .music.expanded {
-    height: 100%; 
+    height: 100%;
 }
 
 .now-playing {
@@ -181,6 +178,7 @@ button {
     color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: color 1s ease;
 }
 
 .track-title.expanded {
@@ -202,6 +200,7 @@ button {
     color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: color 1s ease;
 
 }
 
@@ -248,11 +247,11 @@ h1 em {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #a34d29;
+    background: #000000;
 }
 
 .status-dot.live {
-    background: var(--highlight_color);
+    background: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
 }
 
 .now-playing strong,
@@ -278,6 +277,8 @@ h1 em {
     border: 1px solid color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+
+    transition: color 1s ease, border 1s ease;
 }
 
 .transport .transport-main {
@@ -294,6 +295,7 @@ h1 em {
     border-color: color-mix(in srgb,
             var(--dark_tint-text) var(--dark_mix_weight),
             var(--light_tint-text) var(--light_mix_weight));
+    transition: background-color 1s ease, border-color 1s ease;
 
 }
 
@@ -303,19 +305,30 @@ h1 em {
 
 .mixer-panel {
     min-width: 0;
-    padding: clamp(15px, 5vw, 20px);
+    padding-top: 15px;
+    padding-left: 0;
     width: 100%;
     flex-basis: 65%;
-    background: var(--mixer_bg_color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Takes full viewport height */
+    background: color-mix(in srgb, var(--media_bg_color), #000000 70%);
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+
+    transition: color 1s ease, background 1s ease;
 }
 
 .mixer-panel header {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    color: var(--highlight_color);
-    border-bottom: 1px solid #454946;
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    border-bottom: 1px solid color-mix(in srgb, var(--media_bg_color), #ffffff 20%);
     padding-bottom: 16px;
+    padding-right: 16px;
+    padding-left: 16px;
+
+    transition: color 1s ease, border 1s ease;
 
 }
 
@@ -325,31 +338,58 @@ h1 em {
     gap: 22px;
     text-align: right;
 
+
 }
 
 .extension-status {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    color: var(--highlight_color);
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    transition: color 1s ease;
 }
 
 .mixer-panel small {
-    color: #8e9790;
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    transition: color 1s ease;
 }
 
 .mixer-panel small.extension-status {
-    color: var(--highlight_color);
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
+    transition: color 1s ease;
 }
 
 .mixer-list {
-    margin-top: 18px;
+    display: flex; 
+    flex-direction: column;
+    height:100vh;
+    
 }
 
 .mixer-row {
-    padding: 24px 0;
-    border-bottom: 1px solid #454946;
-    padding-right: 45px;
+    
+    flex:1;
+    display: flex; 
+    flex-direction:column;
+    justify-content: center;
+    border-bottom: 1px solid color-mix(in srgb, var(--media_bg_color), #ffffff 20%);
+    padding-right: 55px;
+    padding-left: 28px;
+    transition: border 1s ease;
+
+}
+
+.mixer-row.selected {
+
+    --mixer_bg: color-mix(in srgb, var(--media_bg_color), #000000 70%);
+    --dark_tint: color-mix(in srgb, var(--mixer_bg), #ffffff 20%);
+    --light_tint: color-mix(in srgb, var(--mixer_bg), #000000 30%);
+
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background 1s ease;
+
 }
 
 .row-top,
@@ -358,6 +398,7 @@ h1 em {
     align-items: center;
     justify-content: space-between;
     gap: 18px;
+
 }
 
 .row-top strong {
@@ -366,8 +407,10 @@ h1 em {
 }
 
 .row-top span {
-    color: var(--highlight_color);
+    color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
     font-family: 'DM Mono', monospace;
+
+    transition: color 1s ease;
 }
 
 .row-bottom {
@@ -378,32 +421,97 @@ h1 em {
     min-width: 58px;
     padding: 6px 0;
     border: 0;
-    border-bottom: 1px solid #69716b;
+    border-bottom: 1px solid color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
     background: transparent;
     color: #8e9790;
     text-align: left;
+
+    transition: border 1s ease;
 }
 
 .mute.active {
     color: #ff9d73;
     border-color: #ff9d73;
+
+    transition: color 1s ease;
 }
 
-input[type='range'] {
-    flex: 1;
-    accent-color: var(--highlight_color);
-    min-width: 80px;
+/* 
+   ==========================================
+   SLIDER STYLES
+   ========================================== 
+*/
+
+/* Base resets for all browsers */
+input[type=range] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: transparent;
 }
 
-.availability {
-    color: #8e9790;
-    min-width: 70px;
-    text-align: right;
+/* Base custom properties used across elements */
+input[type=range] {
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
 }
 
-.empty {
-    padding: 40px 0;
-    color: #8e9790;
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
+/*
+   TRACK STYLES
+*/
+
+/* WebKit (Chrome, Safari, Edge) */
+input[type=range]::-webkit-slider-runnable-track {
+    -webkit-appearance: none;
+    height: 1.5rem;
+    border-radius: 0;
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background 1s ease;
+}
+
+/* Firefox */
+input[type=range]::-moz-range-track {
+    height: 1.5rem;
+    border-radius: 0;
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background 1s ease;
+}
+
+/*
+   THUMB STYLES
+*/
+
+/* WebKit (Chrome, Safari, Edge) */
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 2.5rem;
+    width: 1.0rem;
+    border-radius: 0;
+    transform: translateY(-0.5rem);
+
+    background: color-mix(in srgb,
+            color-mix(in srgb, var(--media_bg_color), #ffffff 0%) var(--dark_mix_weight),
+            color-mix(in srgb, var(--media_bg_color), #000000 0%) var(--light_mix_weight));
+    transition: background 1s ease;
+    cursor: pointer;
+    margin-top: 0;
+}
+
+/* Firefox */
+input[type=range]::-moz-range-thumb {
+    height: 2.5rem;
+    width: 1.0rem;
+    border-radius: 0;
+    border: none;
+
+    background: color-mix(in srgb,
+            color-mix(in srgb, var(--media_bg_color), #ffffff 0%) var(--dark_mix_weight),
+            color-mix(in srgb, var(--media_bg_color), #000000 0%) var(--light_mix_weight));
+    transition: background 1s ease;
+    cursor: pointer;
 }

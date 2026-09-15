@@ -17,7 +17,7 @@ import { BridgethingClient, type PlayerState } from '@bridgething/client';
 import { motion } from 'framer-motion';
 import { FastAverageColor } from 'fast-average-color';
 import { daemonUrl } from './daemon';
-import { scrollHandler, selectionHandler, useDebugHardwareEvents } from './inputHandler';
+import { scrollHandler, selectionHandler, muteHandler, useDebugHardwareEvents } from './inputHandler';
 
 const isClientDevServer = import.meta.env.DEV;
 
@@ -73,12 +73,9 @@ export default function App() {
 
   // UI Color
   const [artworkBg, setArtworkBg] = useState<string>("#080000");
-  const [highlight_color, set_highlight_color] = useState('#ff5269');
   const [media_bg_color, set_media_bg_color] = useState('#ff5269');
   const [is_bg_dark, set_is_bg_dark] = useState<Boolean>(false);
-  const [media_text_color, set_media_text_color] = useState('#000000');
-  const [mixer_bg_color, set_mixer_bg_color] = useState('#202322');
-  const [mixer_text_color, set_mixer_text_color] = useState('#f4f1e8');
+
 
   // UI helpers
   const [useAlbumColor, setUseAlbumColor] = useState(false); // decides if album cover determines background color
@@ -121,22 +118,11 @@ export default function App() {
       if (change.key === 'useArtworkColor') {
         setUseAlbumColor(change.value == "true" ? true : false);
       }
-      if (change.key === 'highlight_color') {
-        set_highlight_color(change.value || '#ff5269');
-      }
+
       if (change.key === 'media_bg_color') {
         set_media_bg_color(change.value || '#ff5269');
       }
-      if (change.key === 'media_text_color') {
-        set_media_text_color(change.value || '#000000');
-      }
 
-      if (change.key === 'mixer_bg_color') {
-        set_mixer_bg_color(change.value || '#202322');
-      }
-      if (change.key === 'mixer_text_color') {
-        set_mixer_text_color(change.value || '#f4f1e8');
-      }
     });
 
     // on mount
@@ -150,32 +136,13 @@ export default function App() {
         setUseAlbumColor(result.response.value == 'true' ? true : false);
       }
     });
-    client.config.get({ key: 'highlight_color' }).then(result => {
-      if (result.ok) {
-        set_highlight_color(result.response.value || '#ff5269');
-      }
-    });
 
     client.config.get({ key: 'media_bg_color' }).then(result => {
       if (result.ok) {
         set_media_bg_color(result.response.value || '#ff5269');
       }
     });
-    client.config.get({ key: 'media_text_color' }).then(result => {
-      if (result.ok) {
-        set_media_text_color(result.response.value || '#000000');
-      }
-    });
-    client.config.get({ key: 'mixer_bg_color' }).then(result => {
-      if (result.ok) {
-        set_mixer_bg_color(result.response.value || '#202322');
-      }
-    });
-    client.config.get({ key: 'mixer_text_color' }).then(result => {
-      if (result.ok) {
-        set_mixer_text_color(result.response.value || '#f4f1e8');
-      }
-    });
+
     return offConfig;
   }, []);
 
@@ -260,7 +227,7 @@ export default function App() {
       return () => { cancelled = true; };
     }
     fetchArtworkInfo();
-  }, [player?.track?.artworkId, useAlbumColor]);
+  }, [player?.track?.artworkId, useAlbumColor, media_bg_color]);
 
 
   // interval that gathers player duration information 
@@ -339,7 +306,7 @@ export default function App() {
       <section className="mixer-panel">
 
         <header>
-          <span>{!noAppsTracked ? selectedApp ?? 'None' : "No Apps Tracked | Check settings"}</span>
+          <span>{!mixerError && noAppsTracked && "No Apps Tracked | Check settings"}</span>
           <div className="mixer-meta">
             <small className="extension-status">
               <span className={connected ? 'status-dot live' : 'status-dot'} />{connected ? 'Mixer Working' : 'Mixer Down'}
@@ -347,17 +314,27 @@ export default function App() {
           </div>
         </header>
 
-
         {!noAppsTracked && !mixerError && (
-
-          <div className="mixer-list">
+          <div className = "mixer-list">
             {/* Loops through displayApps */}
             {Object.entries(apps).map(([appName, state]) => {
               const isUnreachableApp = state.volume < 0;
-              return <article className="mixer-row" key={appName} style={{ backgroundColor: selectedApp === appName ? 'rgba(255, 255, 255, 0.1)' : 'transparent' }} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
+              return <article className={`mixer-row ${selectedApp == appName ? "selected" : ""}`} key={appName} onClick={() => (setSelectedApp(prev => prev === appName ? "" : appName))}>
                 <div className="row-top"><strong>{appName}</strong><span>{isUnreachableApp ? '--' : `${state.volume}%`}</span></div>
                 <div className="row-bottom">
-                  <button className={state.muted ? 'mute active' : 'mute'} onClick={() => !noAppsTracked && !isUnreachableApp && send({ type: 'volume:toggleMute', appName })} disabled={noAppsTracked || isUnreachableApp} title="Toggle mute">{state.muted ? 'MUTED' : 'MUTE'}</button>
+
+                  <button
+                    className={state.muted ? 'mute active' : 'mute'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      !noAppsTracked && !isUnreachableApp && send({ type: 'volume:toggleMute', appName });
+                    }}
+                    disabled={noAppsTracked || isUnreachableApp}
+                    title="Toggle mute"
+                  >
+                    {state.muted ? 'MUTED' : 'MUTE'}
+                  </button>
+
                   <input
                     id={`volume-${appName}`}
                     type="range"
@@ -371,6 +348,7 @@ export default function App() {
                         ...previous,
                         [appName]: { ...previous[appName], volume },
                       }));
+                      send({ type: 'volume:set', appName, volume });
                     }}
                   />
                 </div>
@@ -386,19 +364,20 @@ export default function App() {
   isClientDevServer && useDebugHardwareEvents(client); // sets up event listeners for hardware events and sends them to the server for debugging
   scrollHandler(selectedApp, noAppsTracked, setApps, client, setIsScrollActive); // sets up event listeners for scroll events and sends volume updates to the server after a delay
   selectionHandler(client, apps, setSelectedApp); // sets up event listeners for key events to select apps in the mixer
+  muteHandler(selectedApp, noAppsTracked, setApps, client);
   return (
     <main
       className="app-shell"
       style={{
-        '--highlight_color': highlight_color,
+
         '--media_bg_color': useAlbumColor ? artworkBg : media_bg_color,
-        '--media_text_color': media_text_color,
-        '--mixer_bg_color': mixer_bg_color,
-        '--mixer_text_color': mixer_text_color,
 
         // weights for determining if a background is light or dark
         '--dark_mix_weight': is_bg_dark ? '100%' : '0%',
-        '--light_mix_weight': is_bg_dark ? '0%' : '100%'
+        '--light_mix_weight': is_bg_dark ? '0%' : '100%',
+        
+
+       
       } as React.CSSProperties}>
 
       {renderAlbum && renderAlbum()}
