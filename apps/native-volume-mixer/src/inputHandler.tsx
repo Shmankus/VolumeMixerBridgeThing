@@ -106,12 +106,10 @@ export function muteHandler(selectedApp: string | null,
             if (!selectedApp || noAppsTracked) return;
             if (event.key == "Enter") {
                 let currentApp = "";
-
                 client.forward.json({
                     type: "volume:toggleMute",
                     appName: selectedApp,
                 });
-
                 setApps((previous) => {
                     const currentApp = previous[selectedApp];
                     if (!currentApp) return previous;
@@ -120,7 +118,6 @@ export function muteHandler(selectedApp: string | null,
                         [selectedApp]: { ...currentApp, muted: !currentApp.muted },
                     };
                 });
-
                 sendServerLog(client, "Muted " + currentApp);
             }
 
