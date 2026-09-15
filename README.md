@@ -1,6 +1,8 @@
+<div align="center">
 
 # volumeMixerThing
 A media control application for the BridgeThing app.
+
 volumeMixerThing provides a clean UI for controlling application volumes and controlling currently playing media
 
 <center>
@@ -8,9 +10,24 @@ volumeMixerThing provides a clean UI for controlling application volumes and con
 ![alt text](image-1.png)
 ![alt text](image.png)
 
+
+[![GitHub license](https://img.shields.io/github/license/Shmankus/VolumeMixerBridgeThing?color=green)]()
+[![GitHub issues](https://img.shields.io/github/issues/Shmankus/VolumeMixerBridgeThing?color=red)]()
+[![GitHub stars](https://img.shields.io/github/stars/Shmankus/VolumeMixerBridgeThing?color=yellow)]()
+[![GitHub forks](https://img.shields.io/github/forks/Shmankus/VolumeMixerBridgeThing?color=orange)]()
+[![GitHub watchers](https://img.shields.io/github/watchers/Shmankus/VolumeMixerBridgeThing?color=blue)]()
+
+
 </center>
 
+</div>
+
+
+<div align="center">
+
 ## Features
+</div>
+
 - **Audio Control:** Allows for either touchscreen or scrollable audio via selecting an application.
     - (Select App via buttons or touchscreen, then scroll to adjust volume and press to toggle mute)
 - **Media Control:** Allows for media control, (play/pause, next, back) with current duration.
@@ -18,7 +35,11 @@ volumeMixerThing provides a clean UI for controlling application volumes and con
 - **Modular Application Control:** Easily add or remove wanted apps from UI using settings.
 - **Background Color Control:** Easily change background color with toggle for auto.
 
+
+<div align="center">
+
 ## Feature Compatibility Matrix
+</div>
 
 | Feature | Windows | macOS | Linux | Notes |
 | :--- | :---: | :---: | :---: | :--- |
@@ -26,8 +47,12 @@ volumeMixerThing provides a clean UI for controlling application volumes and con
 | Media Playback Controls | ✅ | ✅ | ✅ |  |
 |Audio Control| ✅ | ❌ | ❌ | Bridge to volume mixer |
 
+<div align="center">
 
 ## Quick Start
+
+</div>
+
 **Prerequisites:**
 
 * [Node.js](https://nodejs.org/) (v18 or higher)
@@ -52,7 +77,12 @@ or
 
 5. **Then you have the zip file you can import into **BridgeThing****
 
+
+<div align="center">
+
 ## App Structure
+</div>
+
 ```text
 volumeMixerThing/
 │
@@ -98,13 +128,17 @@ volumeMixerThing/
 └── vite.settings.config.ts
 ```
 
+<div align="center">
 
 ## Development & Testing
+</div>
 
 BridgeThing help: [BridgeThing](https://github.com/JoeyEamigh/bridgething.git)
 
-## Develop
+<div align="center">
 
+## Develop
+</div>
 ```sh
 bun run dev            # develop the app against a connected bridgething instance
 bun run dev:device     # show the dev server on the car thing screen
@@ -148,6 +182,9 @@ bun run skills           # refresh it from the published create-bridgething
 bun run skills --check   # check whether it is behind
 ```
 
-## License
+<div align="center">
 
-Distributed under the MIT License. See `LICENSE` for details.
+##  License
+</div>
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
