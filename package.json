@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "fast-average-color": "^9.5.2",
-    "framer-motion": "^13.2.0"
+    "framer-motion": "^13.2.0",
+    "native-sound-mixer": "^3.4.6-win"
   }
 }

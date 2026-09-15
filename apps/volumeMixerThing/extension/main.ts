@@ -63,7 +63,7 @@ function readSettingsFromString(settings: string): { id: string; names: string[]
 
 /** Starts the hidden Node bridge that can load the Windows-only native addon. */
 function createMixerClient(deno: any): MixerClient {
-  const helperPath = fileUrlToWindowsPath(new URL('./runtime/win32-x64/mixer-helper.cjs', import.meta.url));
+  const helperPath = fileUrlToWindowsPath(new URL('./runtime/linux-x64/mixer-helper.cjs', import.meta.url));
 
 
   const process = new deno.Command("node", {
