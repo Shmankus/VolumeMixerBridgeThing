@@ -14,8 +14,8 @@
         "typescript": "^6.0.3",
       },
     },
-    "apps/native-volume-mixer": {
-      "name": "native-volume-mixer",
+    "apps/volumeMixerThing": {
+      "name": "volumeMixerThing",
       "version": "0.1.0",
       "dependencies": {
         "@bridgething/client": "^0.12.1",
