@@ -5,8 +5,6 @@
     color: #f4f1e8;
     background: #161817;
     font-synthesis: none;
-
-
 }
 
 :focus {
@@ -32,7 +30,6 @@ body {
 button,
 input {
     font: inherit;
-
 }
 
 button {
@@ -64,19 +61,15 @@ button {
     min-height: 100%;
     width: 100%;
     transition: background-color 1s ease;
-
-
 }
 
 .hero-panel.expanded {
     flex-direction: row;
     width: 100%;
-
 }
 
 .progress-bar {
     height: 15px;
-
     /* Makes progress bar background oppisite brightness of background by 50%*/
     --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
     --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
@@ -316,14 +309,11 @@ h1 em {
     padding-left: 0;
     width: 100%;
     flex-basis: 65%;
-
-
-
-
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Takes full viewport height */
     background: color-mix(in srgb, var(--media_bg_color), #000000 70%);
-
     color: color-mix(in srgb, var(--media_bg_color), #ffffff 80%);
-
 
     transition: color 1s ease, background 1s ease;
 }
@@ -369,34 +359,36 @@ h1 em {
     transition: color 1s ease;
 }
 
-.mixer-list {}
+.mixer-list {
+    display: flex; 
+    flex-direction: column;
+    height:100vh;
+    
+}
 
 .mixer-row {
-    padding: var(--app_padding);
+    
+    flex:1;
+    display: flex; 
+    flex-direction:column;
+    justify-content: center;
     border-bottom: 1px solid color-mix(in srgb, var(--media_bg_color), #ffffff 20%);
-    padding-right: 45px;
+    padding-right: 55px;
     padding-left: 28px;
-
     transition: border 1s ease;
-
 
 }
 
 .mixer-row.selected {
 
     --mixer_bg: color-mix(in srgb, var(--media_bg_color), #000000 70%);
-
     --dark_tint: color-mix(in srgb, var(--mixer_bg), #ffffff 20%);
     --light_tint: color-mix(in srgb, var(--mixer_bg), #000000 30%);
 
     background: color-mix(in srgb,
             var(--dark_tint) var(--dark_mix_weight),
             var(--light_tint) var(--light_mix_weight));
-
-
     transition: background 1s ease;
-
-
 
 }
 
@@ -444,47 +436,82 @@ h1 em {
     transition: color 1s ease;
 }
 
+/* 
+   ==========================================
+   SLIDER STYLES
+   ========================================== 
+*/
 
-
+/* Base resets for all browsers */
 input[type=range] {
     -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     width: 100%;
     background: transparent;
 }
 
+/* Base custom properties used across elements */
+input[type=range] {
+    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
+    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
+}
+
+/*
+   TRACK STYLES
+*/
+
+/* WebKit (Chrome, Safari, Edge) */
 input[type=range]::-webkit-slider-runnable-track {
     -webkit-appearance: none;
     height: 1.5rem;
-    border-radius: 0.0rem;
-
-
-    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 50%);
-    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 50%);
-
+    border-radius: 0;
     background: color-mix(in srgb,
             var(--dark_tint) var(--dark_mix_weight),
             var(--light_tint) var(--light_mix_weight));
-
     transition: background 1s ease;
-
 }
 
+/* Firefox */
+input[type=range]::-moz-range-track {
+    height: 1.5rem;
+    border-radius: 0;
+    background: color-mix(in srgb,
+            var(--dark_tint) var(--dark_mix_weight),
+            var(--light_tint) var(--light_mix_weight));
+    transition: background 1s ease;
+}
+
+/*
+   THUMB STYLES
+*/
+
+/* WebKit (Chrome, Safari, Edge) */
 input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     height: 2.5rem;
     width: 1.0rem;
-    border-radius: .0rem;
-    translate: 0 -.5rem;
-
-    --dark_tint: color-mix(in srgb, var(--media_bg_color), #ffffff 0%);
-    --light_tint: color-mix(in srgb, var(--media_bg_color), #000000 0%);
+    border-radius: 0;
+    transform: translateY(-0.5rem);
 
     background: color-mix(in srgb,
-            var(--dark_tint) var(--dark_mix_weight),
-            var(--light_tint) var(--light_mix_weight));
-
+            color-mix(in srgb, var(--media_bg_color), #ffffff 0%) var(--dark_mix_weight),
+            color-mix(in srgb, var(--media_bg_color), #000000 0%) var(--light_mix_weight));
     transition: background 1s ease;
     cursor: pointer;
     margin-top: 0;
 }
 
+/* Firefox */
+input[type=range]::-moz-range-thumb {
+    height: 2.5rem;
+    width: 1.0rem;
+    border-radius: 0;
+    border: none;
+
+    background: color-mix(in srgb,
+            color-mix(in srgb, var(--media_bg_color), #ffffff 0%) var(--dark_mix_weight),
+            color-mix(in srgb, var(--media_bg_color), #000000 0%) var(--light_mix_weight));
+    transition: background 1s ease;
+    cursor: pointer;
+}
