@@ -1,32 +1,8 @@
-import { run, type MixerBackend, type Session } from './shared';
+import { run, runtimePath, type MixerBackend, type Session } from './shared';
 
-// macos has no per-process volume without installing an audio driver, so this controls the system output
-// plus the players that expose their own volume over apple events. jxa resolves apps at runtime, so a player
-// that is not installed is skipped instead of failing the whole script the way applescript would.
-const SCRIPT = `
-function run(argv) {
-  const [action, key, value] = argv;
-  const system = Application.currentApplication();
-  system.includeStandardAdditions = true;
-  const players = { spotify: 'com.spotify.client', music: 'com.apple.Music' };
-  if (action === 'set' && key === 'system') system.setVolume(null, { outputVolume: Number(value) });
-  else if (action === 'mute' && key === 'system') system.setVolume(null, { outputMuted: value === '1' });
-  else if (action === 'set') Application(players[key]).soundVolume = Number(value);
-  if (action !== 'list') return '[]';
-
-  const settings = system.getVolumeSettings();
-  const sessions = [{ key: 'system', names: ['system', 'master'], volume: settings.outputVolume, muted: settings.outputMuted }];
-  for (const key of Object.keys(players)) {
-    try {
-      const app = Application(players[key]);
-      if (app.running()) sessions.push({ key, names: [key, app.name()], volume: app.soundVolume(), muted: false });
-    } catch (error) {}
-  }
-  return JSON.stringify(sessions);
-}
-`;
-
-const osascript = (...args: string[]) => run('osascript', ['-l', 'JavaScript', '-e', SCRIPT, ...args]);
+// macos has no per-process volume without installing an audio driver, so runtime/macos/mixer.js controls the
+// system output plus the players that expose their own volume over apple events
+const osascript = (...args: string[]) => run('osascript', ['-l', 'JavaScript', runtimePath('macos/mixer.js'), ...args]);
 
 export function macosBackend(): MixerBackend {
   // players have no mute of their own, so muting parks them at 0 and remembers where they were

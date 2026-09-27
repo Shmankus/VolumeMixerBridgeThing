@@ -26,17 +26,21 @@ type MixerBackend = {
 
 `key` is opaque outside the backend that produced it. `names` are what tracked-app names are matched against.
 
+The scripts the backends call live in `extension/runtime/`. The build (and the dev loop) copies that folder next to
+`desktop.mjs`, and `runtimePath()` resolves files relative to the bundle.
+
 | OS | File | How | Key |
 | :--- | :--- | :--- | :--- |
-| Windows | `windows.ts` | One long-lived hidden `powershell.exe` that compiles a small C# Core Audio (WASAPI) shim at startup, then answers one line per request on stdin/stdout. | process id |
+| Windows | `windows.ts` | One long-lived hidden `powershell.exe` running `runtime/windows/mixer.ps1`, which compiles `CoreAudio.cs` (a small Core Audio / WASAPI shim) at startup, then answers one line per request on stdin/stdout. | process id |
 | Linux | `linux.ts` | Runs `pactl -f json list sink-inputs` and `pactl set-sink-input-volume/-mute` (PulseAudio or PipeWire). | sink-input index |
-| macOS | `macos.ts` | Runs a JXA script through `osascript`: system output volume, plus Spotify and Music's own `sound volume`. | `system`, `spotify`, `music` |
+| macOS | `macos.ts` | Runs `runtime/macos/mixer.js` (JXA) through `osascript`: system output volume, plus Spotify and Music's own `sound volume`. | `system`, `spotify`, `music` |
 
 ### Why Windows works this way
 
 - Every call re-enumerates the audio endpoints, so switching output devices never leaves stale sessions. That
   used to need a fresh Node process on every poll.
-- The shim is passed with `-EncodedCommand`, so no script file ships and execution policy does not apply.
+- `mixer.ps1` runs with `-ExecutionPolicy Bypass`, scoped to that one process, so the unsigned script works on
+  machines whose policy would otherwise block it.
 - It needs nothing installed beyond PowerShell 5.1, which every supported Windows has. Startup costs about a
   second once. After that a poll takes around 25 ms.
 - If PowerShell dies, `lineProcess` fails the requests that were in flight and starts a new one on the next

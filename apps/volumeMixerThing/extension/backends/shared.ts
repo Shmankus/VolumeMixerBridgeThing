@@ -18,6 +18,15 @@ export function cleanName(value: string): string {
   return (value.split(/[\\/]/).at(-1) ?? '').replace(/\.exe$/i, '').trim().toLowerCase();
 }
 
+/**
+ * Absolute path of a file under extension/runtime, which the build copies next to the bundle.
+ * import.meta.url is the bundle's own url once esbuild inlines this module, so resolve from there.
+ */
+export function runtimePath(relative: string): string {
+  const path = decodeURIComponent(new URL(`./runtime/${relative}`, import.meta.url).pathname);
+  return /^\/[A-Za-z]:\//.test(path) ? path.slice(1).replaceAll('/', '\\') : path;
+}
+
 export async function run(command: string, args: string[]): Promise<string> {
   const output = await new Deno.Command(command, {
     args,
