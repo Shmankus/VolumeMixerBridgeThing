@@ -1,8 +1,8 @@
 {
   "id": "01a07c59-bf95-7267-93ee-ba147aaff75d",
   "name": "volumeMixerThing",
-  "version": "1.4.0",
-  "description": "Windows app volume mixer with BridgeThing media controls.",
+  "version": "1.5.0",
+  "description": "Per-app volume mixer for Windows, Linux and macOS with BridgeThing media controls.",
   "config": [
     {
       "type": "string",
@@ -25,18 +25,21 @@
         "label": "Media Background Color (e.g. #ff5269 )"
       }
     }
-    
   ],
-  "permissions": ["forward"],
+  "permissions": [
+    "forward"
+  ],
   "art": {
     "heroPx": 248,
     "thumbPx": 96
   },
   "extension": {
     "entry": "extension/desktop.mjs",
-    "permissions": ["run", "read:extension"],
+    "permissions": [
+      "run:powershell.exe",
+      "run:pactl",
+      "run:osascript"
+    ],
     "api": 1
   }
 }
-
-

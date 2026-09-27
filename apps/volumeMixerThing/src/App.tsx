@@ -26,7 +26,7 @@ type VolumeStateMessage = { type: 'volume:state'; apps: AppState };
 type MixerErrorMessage = { type: 'volume:error'; message: string };
 
 const client = new BridgethingClient({ url: daemonUrl() });
-const defaultApps = "Firefox|{firefox,mozilla firefox},Apple Music|{amplibraryagent},Discord|{discord}";
+const defaultApps = "Firefox|{firefox,mozilla firefox},Apple Music|{amplibraryagent,music},Discord|{discord}";
 
 
 // makes sure value is regarding volume states
