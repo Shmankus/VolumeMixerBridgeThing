@@ -38,7 +38,8 @@
     "permissions": [
       "run:powershell.exe",
       "run:pactl",
-      "run:osascript"
+      "run:osascript",
+      "env:LD_LIBRARY_PATH"
     ],
     "api": 1
   }

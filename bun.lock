@@ -16,7 +16,7 @@
     },
     "apps/volumeMixerThing": {
       "name": "native-volume-mixer",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "dependencies": {
         "@bridgething/client": "^0.12.1",
         "@bridgething/extension": "^0.12.1",

@@ -1,4 +1,4 @@
-import { run, type MixerBackend } from './shared';
+import { Deno, run, type MixerBackend } from './shared';
 
 type SinkInput = {
   index: number;
@@ -9,6 +9,8 @@ type SinkInput = {
 
 // pactl talks to pulseaudio and to pipewire-pulse alike, which covers every mainstream desktop
 export function linuxBackend(): MixerBackend {
+  // the appimage desktop app leaks its LD_LIBRARY_PATH to us, and deno refuses to spawn with it under a scoped allow-run
+  Deno.env.delete('LD_LIBRARY_PATH');
   return {
     async list() {
       const inputs = JSON.parse(await run('pactl', ['-f', 'json', 'list', 'sink-inputs'])) as SinkInput[];
