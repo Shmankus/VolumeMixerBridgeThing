@@ -13,12 +13,11 @@ var DAEMON_PROXY_PATH = '/__bridgething';
 
 // ../webapp-shared/src/extension.ts
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createRequire as createRequire2 } from 'node:module';
 import { homedir, platform } from 'node:os';
 import { delimiter, dirname, join as join2, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
-import { EXTENSION_RUNTIME_ASSETS, EXTENSION_RUNTIME_DIR } from './extension-runtime';
 
 // ../webapp-shared/src/gateway.ts
 import { decode as msgpackDecode, encode as msgpackEncode } from '@msgpack/msgpack';
@@ -352,6 +351,10 @@ function extensionBuildOptions(source, outfile) {
     logLevel: 'silent',
   };
 }
+// the backends shell out to scripts that have to sit next to the bundle, in dev and in the shipped zip alike
+function copyExtensionRuntime(root, outfile) {
+  cpSync(resolve(root, 'extension', 'runtime'), join2(dirname(outfile), 'runtime'), { recursive: true, force: true });
+}
 async function buildExtension(root, outDir, extension) {
   const esbuild = await import('esbuild');
   const outfile = resolve(root, outDir, extension.entry);
@@ -363,6 +366,7 @@ async function buildExtension(root, outDir, extension) {
 `),
     );
   }
+  copyExtensionRuntime(root, outfile);
   return outfile;
 }
 async function resolveDeno(root) {
@@ -535,16 +539,7 @@ ${lines.join(`
       clearTimeout(this.restartTimer);
       this.restartTimer = null;
     }
-    const runtimeDir = join2(dirname(this.outfile), EXTENSION_RUNTIME_DIR);
-    mkdirSync(runtimeDir, { recursive: true });
-    for (const asset of EXTENSION_RUNTIME_ASSETS) {
-      try {
-        unlinkSync(join2(dirname(this.outfile), asset));
-      } catch (error) {
-        if (error?.code !== 'ENOENT') throw error;
-      }
-      copyFileSync(resolve(this.opts.root, 'extension', EXTENSION_RUNTIME_DIR, asset), join2(runtimeDir, asset));
-    }
+    copyExtensionRuntime(this.opts.root, this.outfile);
     this.crashes = 0;
     if (this.child) {
       this.log.info('extension rebuilt; restarting it');

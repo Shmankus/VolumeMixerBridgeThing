@@ -1,125 +1,95 @@
-# Windows Volume Mixer Architecture & Data Flow
+# Volume Mixer Architecture & Data Flow
 
-This document details the bidirectional communication pathways and step-by-step processing pipeline between the React Frontend, the Electron/Node IPC layer (`main.ts`), the process manager (`mixer-helper.cjs`), and the native volume controller (`mixer-worker.cjs`).
+The mixer has two halves: the React webapp on the Car Thing (`src/`) and a Deno extension on the desktop
+(`extension/`). They talk over BridgeThing's forward surface. The extension picks one audio backend for the
+desktop's OS and does everything else, including matching sessions to the apps the user tracks, in shared code.
 
----
-
-## Section 1: Downstream Pathway (Command / Request Flow)
-
-When a user interacts with the UI (e.g., adjusting a volume slider or toggling mute), data flows downstream through four main stages:
-
-`[React UI (App.tsx)]` ──> `[Main Extension / Server Side (main.ts)]` ──> `[Mixer Helper (mixer-helper.cjs)]` ──> `[Mixer Worker (mixer-worker.cjs)]`
-
-### Step-by-Step Downstream Pipeline
-
-1. **User Action in UI (`App.tsx`)**
-   - User drags a slider or triggers a volume update.
-   - `App.tsx` calls an async client method:
-     ```typescript
-     client.forward.json({ type: "volume:set", appName: "Firefox", volume: 80 });
-     ```
-
-2. **Promise Creation & Request Tracking (`main.ts`)**
-   - Generates a unique request `id` (e.g., `16651`).
-   - Stores the Promise's `resolve` and `reject` callbacks in a local `pending` Map:
-     ```typescript
-     pending.set(id, { resolve, reject });
-     ```
-   - Serializes the request payload (including `id`, command `type`, `appName`, `volume`, and `watchedAppsConfig`).
-   - Writes the JSON string with a newline delimiter (`\n`) directly to `mixer-helper.cjs`'s `stdin`.
-
-3. **Synchronous Process Execution (`mixer-helper.cjs`)**
-   - Receives the request line on `stdin` via `readline`.
-   - Passes `request` to `handle(request)`, which spawns the native worker using `child_process.spawnSync`:
-     ```javascript
-     const worker = spawnSync(process.execPath, [path.join(__dirname, 'mixer-worker.cjs')], {
-       input: JSON.stringify(request),
-       encoding: 'utf8',
-       windowsHide: true,
-     });
-     ```
-
-4. **Native Volume Execution (`mixer-worker.cjs`)**
-   - Reads `JSON.parse(process.stdin)` synchronously.
-   - Interfaces with native Windows Core Audio APIs (WASAPI) to set/get app session volumes or mute flags.
-   - Generates an updated snapshot of all tracked apps and their volume states.
+```
+[React UI (App.tsx)] <──forward──> [Extension (main.ts)] <──> [Backend (backends/<os>.ts)] <──> [OS audio]
+```
 
 ---
 
-## Section 2: Upstream Pathway (Response & State Update Flow)
+## Section 1: Backends
 
-Once the worker completes its native audio operation, the updated state flows upstream back to the React UI:
+Each backend implements the same small interface from `backends/shared.ts`:
 
-`[Mixer Worker (mixer-worker.cjs)]` ──> `[Mixer Helper (mixer-helper.cjs)]` ──> `[Main Extension (main.ts)]` ──> `[React UI (App.tsx)]`
+```typescript
+type Session = { key: string; names: string[]; volume: number; muted: boolean }; // volume 0-100
 
-### Step-by-Step Upstream Pipeline
+type MixerBackend = {
+  list(): Promise<Session[]>;
+  setVolume(keys: string[], volume: number): Promise<void>;
+  setMuted(keys: string[], muted: boolean): Promise<void>;
+};
+```
 
-1. **Worker Output (`mixer-worker.cjs`)**
-   - Writes the resultant state object directly to standard output:
-     ```javascript
-     process.stdout.write(JSON.stringify({ apps: handle(parsedRequest) }));
-     ```
+`key` is opaque outside the backend that produced it. `names` are what tracked-app names are matched against.
 
-2. **Helper Relay (`mixer-helper.cjs`)**
-   - Captures `worker.stdout` from `spawnSync`.
-   - Formats the response into a newline-delimited JSON payload containing the original request ID:
-     ```javascript
-     const response = { id: request.id, apps: workerResponse.apps };
-     process.stdout.write(`${JSON.stringify(response)}\n`);
-     ```
+The scripts the backends call live in `extension/runtime/`. The build (and the dev loop) copies that folder next to
+`desktop.mjs`, and `runtimePath()` resolves files relative to the bundle.
 
-3. **Line Reading & Promise Correlation (`main.ts`)**
-   - An asynchronous streaming reader (`reader.read()`) consumes `stdout` chunks from `mixer-helper.cjs`.
-   - Buffers chunks and extracts full lines delimited by `\n`.
-   - Parses the JSON payload:
-     ```typescript
-     const response = JSON.parse(line) as { id: number; apps?: AppState; error?: string };
-     ```
-   - Looks up `response.id` in the `pending` Map:
-     ```typescript
-     const waiting = pending.get(response.id);
-     if (waiting) {
-       pending.delete(response.id);
-       if (response.apps) waiting.resolve(response.apps);
-       else waiting.reject(new Error(response.error));
-     }
-     ```
+| OS | File | How | Key |
+| :--- | :--- | :--- | :--- |
+| Windows | `windows.ts` | One long-lived hidden `powershell.exe` running `runtime/windows/mixer.ps1`, which compiles `CoreAudio.cs` (a small Core Audio / WASAPI shim) at startup, then answers one line per request on stdin/stdout. | process id |
+| Linux | `linux.ts` | Runs `pactl -f json list sink-inputs` and `pactl set-sink-input-volume/-mute` (PulseAudio or PipeWire). | sink-input index |
+| macOS | `macos.ts` | Runs `runtime/macos/mixer.js` (JXA) through `osascript`: system output volume, plus Spotify and Music's own `sound volume`. | `system`, `spotify`, `music` |
 
-4. **React State Sync (`App.tsx`)**
-   - **On Direct Requests:** The resolved promise unblocks the `await` call in `App.tsx`.
-   - **On Real-Time Event Streams (`onJson` listener):**
-     ```typescript
-     const onServerUpdate = client.forward.onJson((message) => {
-       if (isVolumeState(message)) {
-         if (isScrollActiveRef.current) return; // Prevent slider jump during active drag
-         setApps(message.apps);                 // Triggers React re-render
-       }
-     });
-     ```
-   - `setApps(message.apps)` updates component state and refreshes the UI sliders and mute toggles.
+### Why Windows works this way
+
+- Every call re-enumerates the audio endpoints, so switching output devices never leaves stale sessions. That
+  used to need a fresh Node process on every poll.
+- `mixer.ps1` runs with `-ExecutionPolicy Bypass`, scoped to that one process, so the unsigned script works on
+  machines whose policy would otherwise block it.
+- It needs nothing installed beyond PowerShell 5.1, which every supported Windows has. Startup costs about a
+  second once. After that a poll takes around 25 ms.
+- If PowerShell dies, `lineProcess` fails the requests that were in flight and starts a new one on the next
+  request.
+
+### Why macOS is limited
+
+CoreAudio has no API for one app's volume. Tools like SoundSource and Background Music install a virtual audio
+driver to get it. Without one, the only per-app controls are apps that expose a volume over Apple Events.
+Players have no mute of their own, so muting parks them at 0 and restores the previous level.
 
 ---
 
-## Section 3: App Lifecycle & Capability Handshake
+## Section 2: Request Flow
 
-To handle background process crashes, restarts, or initial load scenarios, `App.tsx` executes two parallel flows inside `useEffect`:
+1. **UI action (`App.tsx`)**: `client.forward.json({ type: "volume:set", appName: "Firefox", volume: 80 })`.
+2. **Extension (`main.ts`)**: `handle()` lists sessions, finds the ones whose names match the tracked app, and
+   calls `setVolume` or `setMuted` on their keys. Mute toggles relative to the first matching session, which
+   is the one the UI shows.
+3. **Snapshot**: it lists again and builds `{ [appId]: { volume, muted } }` for every tracked app. `volume` is
+   `-1` for an app that is not currently playing audio.
+4. **Broadcast**: `ctx.broadcast(json({ type: 'volume:state', apps }))` reaches the webapp's `onJson` listener,
+   which calls `setApps` unless the user is mid-scroll.
+
+A poll sends `volume:refresh` every 2 seconds. A refresh that lands within 3 seconds of a `volume:set` is dropped
+so it cannot snap a slider back to its old value.
+
+---
+
+## Section 3: Tracked Apps
+
+The `tracked_apps` setting is `Id|{name,name},Id|{name}`, for example
+`Firefox|{firefox,mozilla firefox},Discord|{discord}`. The webapp sends it as `apps_settings:update`. Names are
+compared case-insensitively, with any path and `.exe` removed, against each session's `names`.
+
+---
+
+## Section 4: App Lifecycle & Capability Handshake
 
 | Purpose | Mechanism | Description |
 | :--- | :--- | :--- |
-| **Initial Boot Check** | `client.capabilities.get()` | Queries system status *once* on component mount to immediately render correct UI state. |
-| **Initial Media Check** | `client.player.stateGet()` | Requests current media state *once* on component mount (track details, play/pause state). |
-| **Live Reconnection Listener** | `client.capabilities.onSnapshot()` | Listens continuously for dynamic service status changes. Calls `updateForwardAvailability()` to set `connected` state and send `{ type: "volume:refresh" }` when connection restores. |
-| **Live Media Listener** | `client.player.onSnapshot()` | Listens continuously for live server-side track/playback state changes and updates `setPlayer`. |
+| **Initial Boot Check** | `client.capabilities.get()` | Queries system status *once* on mount to render the correct UI state. |
+| **Initial Media Check** | `client.player.stateGet()` | Requests current media state *once* on mount. |
+| **Live Reconnection Listener** | `client.capabilities.onSnapshot()` | Tracks forward availability and sends `volume:refresh` when the connection comes back. |
+| **Live Media Listener** | `client.player.onSnapshot()` | Updates `setPlayer` on track and playback changes. |
 
 ---
 
-## Section 4: Key Safety & Performance Mechanisms
+## Section 5: Permissions
 
-1. **Scroll Lock Guard (`isScrollActiveRef`)**
-   - Prevents incoming server snapshots from overwriting UI slider state while the user is actively dragging a volume control.
-
-2. **Stderr Separation**
-   - `main.ts` routes `stderr` from child processes into a separate reader stream so debug/error logs never pollute or corrupt the newline-delimited JSON protocol on `stdout`.
-
-3. **Fire-and-Forget Request Identification**
-   - Attaching unique `id` keys to every request allows the long-running stream handler in `main.ts` to operate completely asynchronously without blocking the Node.js event loop.
+The manifest grants the extension `run:powershell.exe`, `run:pactl` and `run:osascript` and nothing else. Deno
+prints an info line at startup for the two that do not exist on the current OS. That is expected.

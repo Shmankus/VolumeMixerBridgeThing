@@ -45,7 +45,16 @@ volumeMixerThing provides a clean UI for controlling application volumes and con
 | :--- | :---: | :---: | :---: | :--- |
 | BridgeThing Core | ✅ | ✅ | ✅ | Cross-platform BridgeThing engine |
 | Media Playback Controls | ✅ | ✅ | ✅ |  |
-|Audio Control| ✅ | ❌ | ❌ | Bridge to volume mixer |
+| Per-App Audio Control | ✅ | ⚠️ | ✅ | See notes below |
+
+- **Windows:** every app playing audio, through the Core Audio (WASAPI) session API. Nothing extra to install.
+- **Linux:** every app playing audio, through `pactl` (PulseAudio or PipeWire with `pipewire-pulse`, pactl 16+).
+- **macOS:** macOS has no per-app volume without a third-party audio driver, so the mixer controls the
+  system output (`System|{system}`), Spotify (`Spotify|{spotify}`) and Music (`Apple Music|{music}`).
+  The first time, macOS asks to let BridgeThing control Spotify or Music.
+
+App names in the Tracked Apps setting are matched case-insensitively against the process name
+(`firefox`, `discord`) and, on Linux, also the name the app reports to PulseAudio.
 
 <div align="center">
 
@@ -55,7 +64,6 @@ volumeMixerThing provides a clean UI for controlling application volumes and con
 
 **Prerequisites:**
 
-* [Node.js](https://nodejs.org/) (v18 or higher)
 * bun
 * BridgeThing [BridgeThing](https://github.com/JoeyEamigh/bridgething.git)
 
@@ -87,20 +95,23 @@ or
 volumeMixerThing/
 │
 ├── extension/
+│   ├── backends/
+│   │   ├── linux.ts
+│   │   ├── macos.ts
+│   │   ├── shared.ts
+│   │   └── windows.ts
 │   ├── runtime/
-│   │   ├── linux-x64/
-│   │   └── win32-x64/
-│   │       ├── mixer-helper.cjs
-│   │       ├── mixer-worker.cjs
-│   │       └── win-sound-mixer.node
+│   │   ├── macos/
+│   │   │   └── mixer.js
+│   │   └── windows/
+│   │       ├── CoreAudio.cs
+│   │       └── mixer.ps1
 │   └── main.ts
 ├── public/
 │   └── manifest.json
 ├── screenshots/
 ├── scripts/
 │   ├── bridgething.ts
-│   ├── copy-native-assets.ts
-│   ├── extension-runtime.ts
 │   ├── push.ts
 │   └── share.ts
 ├── settings/
@@ -186,5 +197,5 @@ bun run skills --check   # check whether it is behind
 
 ##  License
 </div>
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is under the MIT License - see the [LICENSE](LICENSE)
 

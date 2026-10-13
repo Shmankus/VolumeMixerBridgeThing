@@ -1,12 +1,12 @@
 {
   "name": "native-volume-mixer",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "dev:device": "vite --mode device",
-    "build": "vite build && vite build -c vite.settings.config.ts && bun scripts/copy-native-assets.ts",
+    "build": "vite build && vite build -c vite.settings.config.ts",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "push": "bun scripts/push.ts",
